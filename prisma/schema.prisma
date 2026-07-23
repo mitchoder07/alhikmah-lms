@@ -131,7 +131,7 @@ model FinalExamAttempt {
   startedAt  DateTime @default(now())
   completedAt DateTime?
 
-  exam       FinalExam @relation(fields: [examId], references: [id])
+  exam       FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
   user       User      @relation(fields: [userId], references: [id])
 }
 
@@ -215,7 +215,7 @@ model QuizAttempt {
   startedAt   DateTime @default(now())
   completedAt DateTime?
 
-  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id])
 }
 
