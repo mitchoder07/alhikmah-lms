@@ -1,0 +1,318 @@
+// Al-Hikmah University LMS — Department of Economics
+// Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  password      String
+  role          String   @default("STUDENT") // ADMIN | LECTURER | STUDENT
+  matricNumber  String?  @unique
+  phone         String?
+  department    String   @default("Economics")
+  avatarUrl     String?
+  isApproved    Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments       Enrollment[]
+  quizAttempts      QuizAttempt[]
+  lessonProgress    LessonProgress[]
+  payments          Payment[]
+  certificates      Certificate[]
+  announcements     Announcement[]
+  chatMessages      ChatMessage[]
+  coursesTaught     Course[]
+  finalExamAttempts FinalExamAttempt[]
+  courseAccess      CourseAccess[]
+  blogPosts         BlogPost[]
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  title         String
+  description   String
+  level         String   @default("200") // 100, 200, 300, 400
+  semester      String   @default("First") // First | Second
+  creditUnit    Int      @default(2)
+  thumbnailUrl  String?
+  isPublished   Boolean  @default(false)
+  passMark      Int      @default(50)
+  certificateFee Float   @default(5000) // NGN — fee for certificate only
+  lecturerId    String
+  // Live class fields (Zoom/Google Meet/Teams link)
+  liveClassUrl      String?
+  liveClassTitle    String?
+  liveClassScheduledAt DateTime?
+
+  // Paid course fields (Feature 1)
+  isPaid          Boolean  @default(false) // if true, students must pay courseFee to access materials
+  courseFee       Float    @default(0) // NGN — fee to access course materials (separate from certificate fee)
+  accessDurationMonths Int @default(6) // how long the student has access (months)
+  allowDownload   Boolean  @default(false) // if false, students cannot download materials (anti-sharing)
+  watermarkMaterials Boolean @default(true) // watermark PDFs with student name + matric to deter sharing
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lecturer      User     @relation(fields: [lecturerId], references: [id])
+  modules       Module[]
+  enrollments   Enrollment[]
+  announcements Announcement[]
+  finalExams    FinalExam[]
+  courseAccess  CourseAccess[]
+  blogPosts     BlogPost[]
+}
+
+// CourseAccess — tracks paid access to a course (separate from Enrollment which is free enrollment)
+model CourseAccess {
+  id          String   @id @default(cuid())
+  userId      String
+  courseId    String
+  paidAt      DateTime @default(now())
+  expiresAt   DateTime
+  amountPaid  Float
+  isActive    Boolean  @default(true)
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+// Final Exam — a comprehensive exam at the end of a course. Students must pass to qualify for certificate.
+model FinalExam {
+  id          String   @id @default(cuid())
+  courseId     String   @unique
+  title       String   @default("Final Exam")
+  description String?
+  passMark    Int      @default(50)
+  timeLimit   Int      @default(0) // minutes, 0 = no limit
+  maxAttempts Int      @default(3)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions   FinalExamQuestion[]
+  attempts    FinalExamAttempt[]
+}
+
+model FinalExamQuestion {
+  id        String   @id @default(cuid())
+  examId    String
+  text      String
+  options   String   // JSON string of options array
+  answer    String   // index of correct answer (as string)
+  marks     Int      @default(1)
+  position  Int      @default(0)
+  imageUrl  String?  // optional image/diagram for the question
+
+  exam      FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model FinalExamAttempt {
+  id         String   @id @default(cuid())
+  examId     String
+  userId     String
+  score      Int
+  totalMarks Int
+  passed     Boolean
+  answers    String   // JSON
+  startedAt  DateTime @default(now())
+  completedAt DateTime?
+
+  exam       FinalExam @relation(fields: [examId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  courseId     String
+  title       String
+  description String?
+  position    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  moduleId     String
+  title       String
+  description String?
+  content     String?  // rich text / markdown
+  videoUrl    String?
+  duration    Int      @default(0) // minutes
+  position    Int      @default(0)
+  isPreview   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  files       LessonFile[]
+  quizzes     Quiz[]
+  progress    LessonProgress[]
+}
+
+model LessonFile {
+  id         String   @id @default(cuid())
+  lessonId    String
+  filename   String
+  fileUrl    String
+  fileType   String   // image | document | video | audio | other
+  fileSize   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  lessonId     String
+  title       String
+  description String?
+  timeLimit   Int      @default(0) // minutes, 0 = no limit
+  passMark    Int      @default(50)
+  createdAt    DateTime @default(now())
+
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+}
+
+model QuizQuestion {
+  id        String   @id @default(cuid())
+  quizId     String
+  text      String
+  options   String   // JSON string of options array
+  answer    String   // index of correct answer (as string)
+  marks     Int      @default(1)
+  position  Int      @default(0)
+  imageUrl  String?  // optional image/diagram for the question
+
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id         String   @id @default(cuid())
+  quizId      String
+  userId      String
+  score       Int
+  totalMarks  Int
+  passed      Boolean
+  answers     String   // JSON
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model LessonProgress {
+  id         String   @id @default(cuid())
+  lessonId    String
+  userId      String
+  completed   Boolean  @default(false)
+  watchedSec  Int      @default(0)
+  lastAccessed DateTime @default(now())
+
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  courseId    String
+  userId      String
+  enrolledAt  DateTime @default(now())
+  completedAt DateTime?
+  finalScore  Int?
+  lecturerApproved Boolean @default(false)
+
+  course     Course   @relation(fields: [courseId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  certificate Certificate?
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  userId        String
+  enrollmentId  String?
+  courseId      String?
+  amount        Float
+  currency      String   @default("NGN")
+  provider      String   @default("paystack") // paystack | flutterwave
+  reference     String   @unique
+  status        String   @default("pending") // pending | success | failed
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Certificate {
+  id           String   @id @default(cuid())
+  enrollmentId  String   @unique
+  userId        String
+  courseId      String
+  certificateNumber String @unique
+  issuedAt      DateTime @default(now())
+  score         Int
+  verified      Boolean  @default(true)
+
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  courseId     String?
+  authorId     String
+  title       String
+  body        String
+  publishAt   DateTime? // optional: schedule when the announcement becomes visible
+  createdAt    DateTime @default(now())
+
+  course      Course?  @relation(fields: [courseId], references: [id])
+  author      User     @relation(fields: [authorId], references: [id])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId     String
+  role      String   // user | assistant
+  content   String
+  courseId   String?
+  createdAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// BlogPost — lecturers can post articles visible on the landing page (Feature 4)
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  excerpt     String   // short summary for the card
+  content     String   // full article (markdown or plain text)
+  imageUrl    String?  // cover image
+  authorId    String
+  courseId    String?  // optional: link to a specific course
+  isPublished Boolean  @default(true)
+  publishAt   DateTime? // optional: schedule when the post becomes visible
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User     @relation(fields: [authorId], references: [id])
+  course      Course?  @relation(fields: [courseId], references: [id])
+}
