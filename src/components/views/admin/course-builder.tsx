@@ -416,8 +416,8 @@ function LessonEditor({ moduleId, lesson, courseId, onClose, onSaved }: any) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Video URL (YouTube, MP4, or any video link)</Label>
-              <Input value={form.videoUrl} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} placeholder="https://www.youtube.com/embed/..." />
-              <p className="text-[11px] text-muted-foreground">Paste a YouTube embed URL (https://www.youtube.com/embed/VIDEO_ID), a direct MP4 link, or any video URL.</p>
+              <Input value={form.videoUrl} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." />
+              <p className="text-[11px] text-muted-foreground">Paste any YouTube link (watch or embed), YouTube short link, or direct video URL. We'll convert it automatically.</p>
             </div>
             <div className="space-y-1.5">
               <Label>Duration (minutes)</Label>

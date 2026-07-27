@@ -8,10 +8,40 @@ import { Progress } from '@/components/ui/progress'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Award, CheckCircle2, ChevronLeft, FileText, Play, PlayCircle, Lock, Brain, Download, Video, File, FileCheck } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { QuizModal } from '@/components/lms/quiz-modal'
+import { QuizModal, QuizResult } from '@/components/lms/quiz-modal'
 import { AITutorPanel } from '@/components/lms/ai-tutor-panel'
+
+/**
+ * Convert any YouTube URL to an embeddable URL.
+ * - https://www.youtube.com/watch?v=VIDEO_ID  -> https://www.youtube.com/embed/VIDEO_ID
+ * - https://youtu.be/VIDEO_ID                 -> https://www.youtube.com/embed/VIDEO_ID
+ * - https://www.youtube.com/embed/VIDEO_ID    -> keep as-is
+ * - Any other URL                             -> keep as-is
+ */
+function convertYouTubeUrl(url: string): string {
+  if (!url) return url
+  try {
+    // Handle youtu.be short links
+    const shortMatch = url.match(/youtu\.be\/([\w-]{6,})/)
+    if (shortMatch) {
+      return `https://www.youtube.com/embed/${shortMatch[1]}`
+    }
+    // Handle watch?v= links
+    const watchMatch = url.match(/[?&]v=([\w-]{6,})/)
+    if (watchMatch && url.includes('youtube.com/watch')) {
+      return `https://www.youtube.com/embed/${watchMatch[1]}`
+    }
+    // Already an embed URL
+    if (url.includes('youtube.com/embed/')) {
+      return url
+    }
+    return url
+  } catch {
+    return url
+  }
+}
 
 interface CourseData {
   course: {
@@ -37,6 +67,7 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null)
   const [quizOpen, setQuizOpen] = useState<string | null>(null)
   const [tutorOpen, setTutorOpen] = useState(false)
+  const tutorRef = useRef<HTMLDivElement>(null)
 
   const course = data?.course
   const enrollment = course?.enrollments?.[0]
@@ -59,7 +90,29 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
       toast.success('Lesson marked complete')
       refetch()
     } catch (e: any) {
-      toast.error(e.message)
+      const msg = e?.message?.includes('Unexpected') || e?.message?.includes('JSON')
+        ? 'Server error. Please try again.'
+        : (e?.message || 'Failed to mark lesson complete')
+      toast.error(msg)
+    }
+  }
+
+  const openTutor = () => {
+    setTutorOpen(true)
+    setTimeout(() => {
+      tutorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 100)
+  }
+
+  // Quiz submission handler — auto-marks the lesson complete when the quiz is passed
+  const handleQuizSubmitted = (result?: QuizResult) => {
+    setQuizOpen(null)
+    refetch()
+    if (result?.passed && activeLesson) {
+      // Auto-mark lesson complete after a passed quiz (fire-and-forget; refetch will reflect state)
+      apiPatch(`/api/courses/${courseId}/lessons/${activeLesson.id}/progress`, { completed: true })
+        .then(() => refetch())
+        .catch(() => { /* refetch already called above; ignore auto-mark errors */ })
     }
   }
 
@@ -107,7 +160,7 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
                 <div className="aspect-video bg-black rounded-t-lg overflow-hidden flex items-center justify-center">
                   {activeLesson.videoUrl ? (
                     <iframe
-                      src={activeLesson.videoUrl}
+                      src={convertYouTubeUrl(activeLesson.videoUrl)}
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -124,19 +177,39 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
                   {activeLesson.description && <p className="text-sm text-muted-foreground mb-3">{activeLesson.description}</p>}
                   {activeLesson.content && <div className="prose prose-sm max-w-none text-sm text-muted-foreground mb-3">{activeLesson.content}</div>}
                   <div className="flex flex-wrap gap-2">
-                    {activeLesson.progress?.[0]?.completed ? (
-                      <Badge variant="secondary" className="bg-green-100 text-green-700"><CheckCircle2 className="h-3 w-3 mr-1" /> Completed</Badge>
-                    ) : (
-                      <Button size="sm" onClick={() => markComplete(activeLesson.id)} className="bg-primary hover:bg-primary/90">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Mark as Complete
-                      </Button>
-                    )}
+                    {(() => {
+                      const isCompleted = !!activeLesson.progress?.[0]?.completed
+                      const hasQuiz = activeLesson.quizzes.length > 0
+                      if (isCompleted) {
+                        return (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700"><CheckCircle2 className="h-3 w-3 mr-1" /> Completed</Badge>
+                        )
+                      }
+                      if (hasQuiz) {
+                        // Quiz lessons must be completed by passing the quiz — show a hint instead of the manual button
+                        return (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                            <Lock className="h-3 w-3 mr-1" /> Pass the quiz to complete this lesson
+                          </Badge>
+                        )
+                      }
+                      return (
+                        <Button size="sm" onClick={() => markComplete(activeLesson.id)} className="bg-primary hover:bg-primary/90">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Mark as Complete
+                        </Button>
+                      )
+                    })()}
                     {activeLesson.quizzes.length > 0 && (
-                      <Button size="sm" variant="outline" onClick={() => setQuizOpen(activeLesson.quizzes[0].id)}>
+                      <Button
+                        size="sm"
+                        variant={activeLesson.progress?.[0]?.completed ? 'outline' : 'default'}
+                        className={activeLesson.progress?.[0]?.completed ? '' : 'bg-primary hover:bg-primary/90'}
+                        onClick={() => setQuizOpen(activeLesson.quizzes[0].id)}
+                      >
                         <Play className="h-3 w-3 mr-1" /> Take Quiz
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => setTutorOpen(true)}>
+                    <Button size="sm" variant="outline" onClick={openTutor}>
                       <Brain className="h-3 w-3 mr-1" /> Ask AI Tutor
                     </Button>
                   </div>
@@ -306,7 +379,9 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
           </Card>
 
           {tutorOpen && (
-            <AITutorPanel courseId={course.id} onClose={() => setTutorOpen(false)} />
+            <div ref={tutorRef}>
+              <AITutorPanel courseId={course.id} onClose={() => setTutorOpen(false)} />
+            </div>
           )}
         </div>
       </div>
@@ -318,7 +393,7 @@ export function StudentCoursePlayer({ courseId, onNavigate }: { courseId: string
           lessonId={activeLesson.id}
           courseId={course.id}
           onClose={() => setQuizOpen(null)}
-          onSubmitted={() => { refetch(); setQuizOpen(null) }}
+          onSubmitted={handleQuizSubmitted}
         />
       )}
     </div>

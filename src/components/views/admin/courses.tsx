@@ -45,7 +45,10 @@ export function AdminCourses({ onNavigate }: { onNavigate: (v: string, p?: any) 
       setForm({ code: '', title: '', description: '', level: '200', semester: 'First', creditUnit: '2', certificateFee: '5000', passMark: '50', isPaid: false, courseFee: '2000', accessDurationMonths: '6', allowDownload: false })
       refetch()
     } catch (e: any) {
-      toast.error(e.message)
+      const msg = e?.message?.includes('Unexpected') || e?.message?.includes('JSON')
+        ? 'Server error. Please try again.'
+        : (e?.message || 'Failed to create course. Please try again.')
+      toast.error(msg)
     }
   }
 
@@ -56,7 +59,10 @@ export function AdminCourses({ onNavigate }: { onNavigate: (v: string, p?: any) 
       toast.success('Course deleted')
       refetch()
     } catch (e: any) {
-      toast.error(e.message)
+      const msg = e?.message?.includes('Unexpected') || e?.message?.includes('JSON')
+        ? 'Server error. Please try again.'
+        : (e?.message || 'Failed to delete course. Please try again.')
+      toast.error(msg)
     }
   }
 

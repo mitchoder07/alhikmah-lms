@@ -27,7 +27,14 @@ function seededShuffle<T>(array: T[], seed: string): T[] {
   return result
 }
 
-export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { quiz: Quiz; lessonId: string; courseId: string; onClose: () => void; onSubmitted: () => void }) {
+export interface QuizResult {
+  score: number
+  totalMarks: number
+  percent: number
+  passed: boolean
+}
+
+export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { quiz: Quiz; lessonId: string; courseId: string; onClose: () => void; onSubmitted?: (result?: QuizResult) => void }) {
   // Generate a unique seed per student per quiz (using quiz ID + a random session ID)
   // This ensures each student sees questions and options in a different order
   const shuffleSeed = useMemo(() => {
@@ -54,7 +61,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
   // answers maps questionId to the selected option TEXT (not index, since options are shuffled)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<{ score: number; totalMarks: number; percent: number; passed: boolean } | null>(null)
+  const [result, setResult] = useState<QuizResult | null>(null)
 
   const allAnswered = shuffledQuestions.every(q => answers[q.id] !== undefined)
 
@@ -94,7 +101,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
               <p className="text-xs mt-1">Score: {result.score} / {result.totalMarks}</p>
             </div>
             <DialogFooter>
-              <Button onClick={onSubmitted} className="bg-primary hover:bg-primary/90">Close</Button>
+              <Button onClick={() => onSubmitted?.(result || undefined)} className="bg-primary hover:bg-primary/90">Close</Button>
             </DialogFooter>
           </div>
         ) : (

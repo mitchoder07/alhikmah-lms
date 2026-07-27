@@ -48,9 +48,17 @@ export async function apiPost(url: string, body?: any) {
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
-  return json
+  const text = await res.text()
+  if (!text) return { ok: true }
+  try {
+    const json = JSON.parse(text)
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+    return json
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('HTTP')) throw e
+    if (e instanceof Error && e.message.includes('Unexpected')) throw new Error(`Server error (${res.status}). Please try again.`)
+    throw e
+  }
 }
 
 export async function apiPatch(url: string, body?: any) {
@@ -59,16 +67,32 @@ export async function apiPatch(url: string, body?: any) {
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
-  return json
+  const text = await res.text()
+  if (!text) return { ok: true }
+  try {
+    const json = JSON.parse(text)
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+    return json
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('HTTP')) throw e
+    if (e instanceof Error && e.message.includes('Unexpected')) throw new Error(`Server error (${res.status}). Please try again.`)
+    throw e
+  }
 }
 
 export async function apiDelete(url: string) {
   const res = await fetch(url, { method: 'DELETE' })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
-  return json
+  const text = await res.text()
+  if (!text) return { ok: true }
+  try {
+    const json = JSON.parse(text)
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+    return json
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('HTTP')) throw e
+    if (e instanceof Error && e.message.includes('Unexpected')) throw new Error(`Server error (${res.status}). Please try again.`)
+    throw e
+  }
 }
 
 export function formatNaira(amount: number) {

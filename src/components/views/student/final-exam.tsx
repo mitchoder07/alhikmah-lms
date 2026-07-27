@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle2, XCircle, Award, ChevronLeft, RotateCcw } from 'lucide-react'
+import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle2, XCircle, Award, ChevronLeft, RotateCcw, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Seeded shuffle for question/option randomization
@@ -47,14 +47,34 @@ interface Exam {
   attempts: ExamAttempt[]
 }
 
+interface CourseProgressData {
+  course: {
+    modules: Array<{
+      id: string
+      lessons: Array<{
+        id: string
+        progress?: Array<{ completed: boolean }>
+      }>
+    }>
+  }
+}
+
 export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { courseId: string; courseTitle: string; onNavigate: (v: string, p?: any) => void }) {
   const { data, loading, refetch } = useApi<{ exam: Exam | null }>(`/api/courses/${courseId}/final-exam`)
+  // Fetch course data to check lesson completion progress (locks exam until all lessons are done)
+  const { data: courseData } = useApi<CourseProgressData>(`/api/courses/${courseId}`)
   const [started, setStarted] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ score: number; totalMarks: number; percent: number; passed: boolean } | null>(null)
 
   const exam = data?.exam
+
+  // All lessons in the course, flattened from modules — used to gate the exam
+  const courseLessons = courseData?.course?.modules?.flatMap(m => m.lessons) ?? []
+  const completedLessons = courseLessons.filter(l => l.progress?.[0]?.completed).length
+  const totalLessons = courseLessons.length
+  const allLessonsCompleted = totalLessons > 0 && completedLessons === totalLessons
 
   // Generate shuffle seed (must be before any early returns to satisfy hooks rules)
   const examSeed = useMemo(() => {
@@ -161,6 +181,47 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
 
   // Exam intro screen
   if (!started) {
+    // Lock the exam until all lessons in the course are completed (skip the lock if the student
+    // already has attempts on record — they were permitted to take it previously)
+    const hasExistingAttempts = exam.attempts.length > 0
+    if (!allLessonsCompleted && !hasExistingAttempts) {
+      return (
+        <div className="max-w-2xl mx-auto space-y-4">
+          <button onClick={() => onNavigate('course-player', { courseId })} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+            <ChevronLeft className="h-3 w-3" /> Back to course
+          </button>
+          <Card className="border-amber-200">
+            <CardContent className="py-10 text-center">
+              <div className="h-16 w-16 rounded-full bg-amber-100 mx-auto mb-4 flex items-center justify-center">
+                <Lock className="h-8 w-8 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Exam Locked</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This exam is locked. Complete all lessons in this course first.
+              </p>
+              <p className="text-sm font-medium mb-6">
+                You have completed <span className="text-primary">{completedLessons}</span> of <span className="text-primary">{totalLessons}</span> lessons.
+              </p>
+              <div className="max-w-xs mx-auto mb-6">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Progress</span>
+                  <span>{totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%</span>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+              <Button onClick={() => onNavigate('course-player', { courseId })} className="bg-primary hover:bg-primary/90">
+                <ChevronLeft className="h-4 w-4 mr-1" /> Back to Course
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
     return (
       <div className="max-w-2xl mx-auto space-y-4">
         <button onClick={() => onNavigate('course-player', { courseId })} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
