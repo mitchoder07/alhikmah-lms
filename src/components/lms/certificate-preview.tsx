@@ -120,9 +120,9 @@ export function CertificatePreview({
 
         <div class="header">
           <div class="header-top">
-            <div class="logo">HUI</div>
+            <div class="logo">ABA</div>
             <div style="text-align: left;">
-              <div class="uni-name">AL-HIKMAH UNIVERSITY</div>
+              <div class="uni-name">AL-BASHIR ACADEMY</div>
               <div class="uni-sub">Ilorin, Kwara State, Nigeria</div>
               <div class="uni-sub">Department of Economics</div>
             </div>
@@ -167,7 +167,7 @@ export function CertificatePreview({
           <div class="sig-block">
             <div class="sig-line">
               <div class="sig-name">Registrar</div>
-              <div class="sig-role">Al-Hikmah University</div>
+              <div class="sig-role">Al-Bashir Academy</div>
             </div>
           </div>
         </div>
@@ -215,9 +215,9 @@ export function CertificatePreview({
 
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0" style={{ background: 'linear-gradient(135deg, #006633, #003d1f)' }}>HUI</div>
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0" style={{ background: 'linear-gradient(135deg, #006633, #003d1f)' }}>ABA</div>
                 <div className="text-left">
-                  <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-HIKMAH UNIVERSITY</p>
+                  <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-BASHIR ACADEMY</p>
                   <p className="text-[10px] text-gray-600">Ilorin, Kwara State, Nigeria</p>
                   <p className="text-[10px] text-gray-600">Department of Economics</p>
                 </div>
@@ -261,7 +261,7 @@ export function CertificatePreview({
                 {loading ? <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-[#006633]" /></div> : <img src={qrUrl} alt="Verify QR" className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-200 p-1" />}
                 <p className="text-[8px] text-gray-500 mt-1">Scan to verify</p>
               </div>
-              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">Registrar</p><p className="text-[10px] text-gray-500">Al-Hikmah University</p></div></div>
+              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">Registrar</p><p className="text-[10px] text-gray-500">Al-Bashir Academy</p></div></div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-[#D4AF37]/40 text-center">

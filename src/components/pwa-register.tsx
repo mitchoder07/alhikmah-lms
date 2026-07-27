@@ -92,11 +92,11 @@ export function PWARegister() {
       <Card className="shadow-lg border-primary/30">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg alhikmah-gradient flex items-center justify-center flex-shrink-0">
+            <div className="h-10 w-10 rounded-lg albashir-gradient flex items-center justify-center flex-shrink-0">
               <Smartphone className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">Install Al-Hikmah LMS</p>
+              <p className="font-medium text-sm">Install Al-Bashir Academy LMS</p>
               <p className="text-xs text-muted-foreground mt-0.5 mb-3">Add to your home screen for offline access and a faster, app-like experience.</p>
               <div className="flex gap-2">
                 <Button size="sm" onClick={install} className="bg-primary hover:bg-primary/90 text-xs h-8">

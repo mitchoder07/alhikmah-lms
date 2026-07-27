@@ -93,7 +93,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const amount = course.courseFee
-  const reference = `AHK-COURSE-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
+  const reference = `ABA-COURSE-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
 
   await db.payment.create({
     data: {
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/?view=course-checkout&ref=${reference}`,
       meta: { courseId, userId: user.id, provider: 'flutterwave', type: 'course_access' },
       customizations: {
-        title: 'Al-Hikmah LMS Course Access',
+        title: 'Al-Bashir Academy LMS Course Access',
         description: `Course access fee for ${course.code}`,
         logo: '/icon-192.png',
       },

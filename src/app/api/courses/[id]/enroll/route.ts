@@ -11,6 +11,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const existing = await db.enrollment.findFirst({ where: { courseId: id, userId: user.id } })
   if (existing) return NextResponse.json({ enrollment: existing, already: true })
 
-  const enrollment = await db.enrollment.create({ data: { courseId: id, userId: user.id, lecturerApproved: true } })
+  const enrollment = await db.enrollment.create({ data: { courseId: id, userId: user.id, lecturerApproved: false } })
   return NextResponse.json({ enrollment })
 }

@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Al-Hikmah LMS | Department of Economics",
-  description: "Learning Management System for the Department of Economics, Al-Hikmah University, Ilorin. Stream lectures, take quizzes, earn verified certificates.",
-  keywords: ["Al-Hikmah University", "LMS", "Economics", "Ilorin", "e-learning", "certificates"],
-  authors: [{ name: "Al-Hikmah University, Ilorin" }],
-  applicationName: "Al-Hikmah LMS",
+  title: "Al-Bashir Academy LMS | Department of Economics",
+  description: "Learning Management System for the Department of Economics, Al-Bashir Academy. Stream lectures, take quizzes, earn verified certificates.",
+  keywords: ["Al-Bashir Academy", "LMS", "Economics", "Ilorin", "e-learning", "certificates"],
+  authors: [{ name: "Al-Bashir Academy" }],
+  applicationName: "Al-Bashir Academy LMS",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -36,13 +36,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Al-Hikmah LMS",
+    title: "Al-Bashir Academy LMS",
   },
   openGraph: {
-    title: "Al-Hikmah LMS | Department of Economics",
-    description: "Learn Economics. Earn Verified Certificates. Al-Hikmah University, Ilorin.",
+    title: "Al-Bashir Academy LMS | Department of Economics",
+    description: "Learn Economics. Earn Verified Certificates. Al-Bashir Academy.",
     type: "website",
-    siteName: "Al-Hikmah LMS",
+    siteName: "Al-Bashir Academy LMS",
   },
 };
 

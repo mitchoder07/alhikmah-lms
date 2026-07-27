@@ -99,8 +99,8 @@ export default function BlogDetailPage() {
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-40">
         <div className="px-4 h-14 flex items-center justify-between max-w-3xl mx-auto">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-full alhikmah-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">HUI</div>
-            <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Hikmah University</span>
+            <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">ABA</div>
+            <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Bashir Academy</span>
           </button>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="text-xs h-8">
             <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Home
@@ -168,12 +168,12 @@ export default function BlogDetailPage() {
         {/* CTA at bottom */}
         <Card className="mt-12 border-primary/20 bg-primary/5">
           <CardContent className="p-6 sm:p-8 text-center">
-            <div className="h-12 w-12 rounded-full alhikmah-gradient flex items-center justify-center mx-auto mb-3">
+            <div className="h-12 w-12 rounded-full albashir-gradient flex items-center justify-center mx-auto mb-3">
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <h2 className="text-xl sm:text-2xl font-bold mb-2">Ready to start learning?</h2>
             <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-              Create a free student account with any email — Gmail, Yahoo, Outlook, or your Al-Hikmah email — and enroll in Economics courses today.
+              Create a free student account with any email — Gmail, Yahoo, Outlook, or your Al-Bashir email — and enroll in Economics courses today.
             </p>
             <Button size="lg" onClick={() => router.push('/register')} className="bg-primary hover:bg-primary/90">
               Create Account <ArrowRight className="ml-2 h-4 w-4" />
@@ -185,7 +185,7 @@ export default function BlogDetailPage() {
       {/* Footer */}
       <footer className="mt-auto border-t bg-background">
         <div className="px-4 py-6 max-w-3xl mx-auto text-center text-[11px] sm:text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Al-Hikmah University, Ilorin · Department of Economics
+          © {new Date().getFullYear()} Al-Bashir Academy · Department of Economics
         </div>
       </footer>
     </div>

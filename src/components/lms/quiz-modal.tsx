@@ -99,7 +99,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
           </div>
         ) : (
           <>
-            <div className="space-y-5 py-2 max-h-[55vh] overflow-y-auto alhikmah-scroll pr-2">
+            <div className="space-y-5 py-2 max-h-[55vh] overflow-y-auto albashir-scroll pr-2">
               {shuffledQuestions.map((q, i) => (
                 <div key={q.id} className="space-y-3">
                   <div className="flex items-start gap-2">

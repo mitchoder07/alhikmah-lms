@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
 
   const amount = enrollment.course.certificateFee
   const reference = providerNorm === 'paystack'
-    ? `AHK-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
-    : `AHK-FLW-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
+    ? `ABA-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
+    : `ABA-FLW-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
 
   await db.payment.create({
     data: {
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/?view=checkout&ref=${reference}`,
       meta: { enrollmentId, courseId, userId: user.id, provider: 'flutterwave' },
       customizations: {
-        title: 'Al-Hikmah LMS Certificate',
+        title: 'Al-Bashir Academy LMS Certificate',
         description: `Certificate fee for ${enrollment.course.code}`,
         logo: '/icon-192.png',
       },

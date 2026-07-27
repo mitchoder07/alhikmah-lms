@@ -46,7 +46,7 @@ export function StaffLoginPage() {
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 alhikmah-gradient" />
+      <div className="absolute inset-0 albashir-gradient" />
       <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(212,175,55,0.4) 0%, transparent 60%)' }} />
 
       {/* Content */}

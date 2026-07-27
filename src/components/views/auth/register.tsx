@@ -29,7 +29,7 @@ export function RegisterPage() {
         setLoading(false)
         return
       }
-      toast.success('Welcome to Al-Hikmah LMS!')
+      toast.success('Welcome to Al-Bashir Academy LMS!')
       // Hard redirect so the session is fresh
       window.location.href = '/'
     } catch (err: any) {
@@ -46,7 +46,7 @@ export function RegisterPage() {
             <ArrowLeft className="h-3 w-3" /> Back to home
           </button>
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full alhikmah-gradient flex items-center justify-center text-white flex-shrink-0"><GraduationCap className="h-5 w-5" /></div>
+            <div className="h-11 w-11 rounded-full albashir-gradient flex items-center justify-center text-white flex-shrink-0"><GraduationCap className="h-5 w-5" /></div>
             <div className="min-w-0">
               <CardTitle className="text-lg sm:text-xl">Create Account</CardTitle>
               <CardDescription className="text-xs sm:text-sm">Open to all learners: Al-Hikmah students and guests</CardDescription>
@@ -97,7 +97,7 @@ export function RegisterPage() {
               </div>
             </div>
             <div className="rounded-md bg-secondary/50 border p-3 text-xs">
-              <p className="text-muted-foreground leading-relaxed">Open to everyone. Al-Hikmah University students and external learners alike. You get the same access to all Economics courses and certificates.</p>
+              <p className="text-muted-foreground leading-relaxed">Open to everyone. Al-Hikmah students and external learners alike. You get the same access to all Economics courses and certificates.</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3 p-5 sm:p-6 pt-0">

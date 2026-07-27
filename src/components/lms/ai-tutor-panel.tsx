@@ -57,7 +57,7 @@ export function AITutorPanel({ courseId, onClose }: { courseId?: string; onClose
     <Card className="border-primary/30">
       <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full alhikmah-gradient-gold flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full albashir-gradient-gold flex items-center justify-center">
             <Brain className="h-4 w-4 text-white" />
           </div>
           <div>

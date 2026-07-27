@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const enrollment = await db.enrollment.findUnique({ where: { id: enrollmentId } })
   if (!enrollment) return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
 
-  const certNumber = `AHK-CERT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+  const certNumber = `ABA-CERT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
   const cert = await db.certificate.create({
     data: {
       enrollmentId,

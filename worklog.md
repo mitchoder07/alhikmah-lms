@@ -219,3 +219,72 @@ Stage Summary:
   - `scripts/seed-more-courses.ts` — seeds 5 new Economics courses (ECO101, ECO102 free; ECO303, ECO402, ECO403 paid). Idempotent. Already executed: 5/5 created, catalog now 11 courses.
 - Did NOT modify `prisma/schema.prisma`. Did NOT run `db:push` or `bun run dev`.
 - `bun run lint` passes cleanly (0 errors, 0 warnings). Dev server log shows clean compiles and the certificate-verify endpoint now returning 200/404/400 as expected.
+
+---
+Task ID: transcript-feature
+Agent: full-stack-developer
+Task: Build student transcript API + admin transcript page, add Edit Score to gradebook, add explanation card
+
+Work Log:
+- Created `/src/app/api/admin/students/[id]/transcript/route.ts` (Task 1):
+  - `GET` handler (admin/lecturer only — returns 403 otherwise, 404 for unknown student).
+  - Loads the student (`name, email, matricNumber, department`), all their enrollments (with `course.code/title/creditUnit/level/semester` and the related `certificate`), every `quizAttempt` (with `quiz.lesson.module.courseId` for grouping), and every `finalExamAttempt` (with `exam.courseId`).
+  - Computes per-enrollment:
+    - `quizAverage` = mean of `(score/totalMarks)*100` across all quiz attempts for that course (rounded).
+    - `finalExamScore` = best `FinalExamAttempt` percentage for that course (rounded).
+    - `finalScore` = `enrollment.finalScore` (lecturer-assigned, may be null).
+    - `grade` + `gradePoint` computed from `finalScore`: A≥70 (5) · B≥60 (4) · C≥50 (3) · D≥40 (2) · F<40 (0). Null if not finalized.
+    - `certificateStatus`: "Issued" (cert exists) | "Eligible" (completedAt + lecturerApproved, no cert yet) | "Pending".
+    - `enrolledAt` and `completedAt` returned as ISO strings.
+  - Computes cumulative GPA as `Σ(gradePoint × creditUnit) ÷ Σ(creditUnit)` across finalized enrollments only; returned as a 2-decimal number (or `null` if no completed courses).
+  - Also returns `totals: { coursesEnrolled, coursesCompleted, certificatesIssued, totalCreditUnits }`.
+  - Used clean sum/count Maps for quiz averaging (not the messy two-step approach I started with).
+- Created `/src/components/views/admin/transcript.tsx` (Task 2):
+  - `AdminTranscript` component, `'use client'`, green/gold themed.
+  - Loads the full student roster via `useApi('/api/admin/students')` and renders a `Select` dropdown (with a `Search` Input to filter the list by name/email/matric) at the top.
+  - When a student is selected, fetches `/api/admin/students/{id}/transcript` via `useApi(url, [selectedId])`.
+  - Student info header (Avatar with initials, name, matric, email, department + 4 stat tiles: Courses, Completed, Certificates, Credit Units) and a "Print Transcript" button.
+  - Enrollments table with columns: Course Code, Title (with Level/Semester/CU subtitle), CU, Quiz Avg, Final Exam, Final Score, Grade, Status, Action.
+  - Each row has an "Edit" button (outline, with `Pencil` icon) that opens a dialog pre-filled with the current `finalScore`, posts to `/api/enrollments/{id}/finalize` on save, and refreshes via `refetch()`.
+  - GPA summary card (gold border) at the bottom showing GPA out of 5.00 with explanatory text.
+  - "Print Transcript" opens a clean new window via `window.open('', '_blank')` and writes a full HTML document (BEC logo, header, student block, transcript table, GPA row, grading scale, signature lines) mirroring the certificate download approach. Includes a print button + `@page { size: A4 portrait }` + `@media print` rules.
+  - `escapeHtml()` helper sanitizes all student/course strings before injecting into the print HTML.
+  - Empty state ("Select a student above…") and loading spinner handled.
+- Updated `/src/components/views/admin/app.tsx` (Task 3):
+  - Imported `FileText` from `lucide-react` and `AdminTranscript` from `./transcript`.
+  - Added nav item `{ id: 'transcript', label: 'Transcripts', icon: FileText }` directly after `gradebook` in the nav array.
+  - Added `{view === 'transcript' && <AdminTranscript />}` to the render section (right after the `gradebook` branch).
+- Updated `/src/app/api/enrollments/[id]/finalize/route.ts` (Task 4):
+  - The POST handler now works for BOTH new finalization AND updating existing scores. It no longer implicitly overwrites `completedAt` — it looks up the existing enrollment first, preserves `completedAt` if already set (otherwise stamps `new Date()`), and always sets `finalScore` + `lecturerApproved=true`.
+  - Added input validation: returns 400 with a clear message if `finalScore` is missing/NaN/out of [0,100].
+  - Returns 404 if the enrollment doesn't exist.
+  - Did NOT add any "must not be completed" check, so editing already-finalized scores works seamlessly.
+- Updated `/src/components/views/admin/gradebook.tsx` (Tasks 4 + 5):
+  - Added ability to EDIT an already-finalized score: when an enrollment has `completedAt` set (whether or not a certificate exists), a small `Pencil` icon button now appears next to the score badge. Clicking it opens the same finalize dialog pre-filled with the current score.
+  - The dialog title dynamically reads "Edit Score" when `mode === 'edit'` and "Finalize Course Score" when `mode === 'new'`. The button label and description text also change with the mode.
+  - Refactored the modal state into a single `FinalizeModalState` object with a `mode: 'new' | 'edit'` discriminator, and split the open handlers into `openNewFinalize` (clears `finalScore`) vs `openEdit` (pre-fills `finalScore` from the existing score).
+  - Fixed a latent bug in the prior code: the original click handler called `setFinalizeScore(...)` which didn't exist (only `setFinalScore` was defined) — the click would have crashed at runtime. Replaced with the correct `setFinalScore` calls inside the new open handlers.
+  - Added input validation client-side (0–100 numeric) before posting to the finalize endpoint, with a `toast.error` if invalid.
+  - Added a prominent explanation Card at the top of the gradebook page (Task 5): titled "How to read this gradebook" with an `Info` icon, light primary background, and a responsive 1/2/3-column grid of legend items that render the actual badges/buttons next to their explanations:
+    - "Enrolled" = student has joined but hasn't taken quizzes.
+    - "XX%" (outline) = average quiz score (auto-calculated from all attempts).
+    - "Approved" (amber) = you have approved the student for certification.
+    - "XX%" (solid) = final score you assigned via "Finalize".
+    - "Cert" = certificate has been issued.
+    - "Finalize" button = assign a final score and approve for certification.
+    - "Edit" button = change an already-assigned final score.
+    - green checkmark = all enrolled courses for this student have been finalized.
+- Verified endpoints respond correctly without auth: `curl /api/admin/students/abc/transcript` → 403, `curl -X POST /api/enrollments/.../finalize` → 403. Both compile cleanly (dev log shows fresh `✓ Compiled in …ms` entries + the expected 403 responses, no errors).
+- Ran `bun run lint` — passes with 0 errors and 0 warnings.
+
+Stage Summary:
+- 2 new files created:
+  - `src/app/api/admin/students/[id]/transcript/route.ts` (transcript API)
+  - `src/components/views/admin/transcript.tsx` (transcript admin view)
+- 3 existing files updated:
+  - `src/components/views/admin/app.tsx` (added Transcripts nav + render branch)
+  - `src/app/api/enrollments/[id]/finalize/route.ts` (supports editing existing scores, preserves `completedAt`, validates input)
+  - `src/components/views/admin/gradebook.tsx` (added Edit button per finalized cell, dynamic dialog title, info card with legend, fixed prior `setFinalizeScore` runtime bug)
+- All components use `'use client'`, shadcn/ui components, `useApi`/`apiPost` from `@/lib/api`, `toast` from `sonner`, icons from `lucide-react`. Transcript print HTML mirrors the certificate download pattern (`window.open('', '_blank')` + `document.write`).
+- Did NOT modify `prisma/schema.prisma`. Did NOT run `db:push` or `bun run dev`.
+- `bun run lint` passes cleanly (0 errors, 0 warnings). Dev server log shows clean compiles for the new routes and the expected 403 responses on unauthenticated requests.

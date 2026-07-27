@@ -15,7 +15,7 @@ interface Analytics {
 }
 
 const COLORS = [
-  '#006633', // Al-Hikmah green
+  '#006633', // Al-Bashir green
   '#D4AF37', // Gold
   '#2E8B57', // Sea green
   '#8B4513', // Saddle brown
@@ -46,10 +46,10 @@ export function AdminDashboard({ onNavigate }: { onNavigate: (v: string, p?: any
 
   return (
     <div className="space-y-6">
-      <div className="alhikmah-gradient rounded-xl p-6 text-white">
+      <div className="albashir-gradient rounded-xl p-6 text-white">
         <p className="text-sm text-white/80">Welcome,</p>
         <h2 className="text-2xl font-bold mb-1">{user?.name || 'Lecturer'}</h2>
-        <p className="text-sm text-white/90">Department of Economics · Al-Hikmah University, Ilorin · Real-time overview of your teaching portal.</p>
+        <p className="text-sm text-white/90">Department of Economics · Al-Bashir Academy · Real-time overview of your teaching portal.</p>
       </div>
 
       {/* Stats */}

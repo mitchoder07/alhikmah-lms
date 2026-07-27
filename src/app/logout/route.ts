@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const res = NextResponse.redirect(new URL(redirect, req.url))
   // Also set the cookie deletion on the redirect response
-  res.cookies.set('alhikmah_session', '', {
+  res.cookies.set('albashir_session', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

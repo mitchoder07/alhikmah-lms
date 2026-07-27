@@ -10,8 +10,8 @@
 set -e
 
 PROJECT_DIR="/home/z/my-project"
-EXPORT_DIR="/tmp/alhikmah-lms-export"
-ZIP_FILE="/home/z/my-project/download/alhikmah-lms-deploy.zip"
+EXPORT_DIR="/tmp/albashir-lms-export"
+ZIP_FILE="/home/z/my-project/download/albashir-lms-deploy.zip"
 
 # Clean up any previous export
 rm -rf "$EXPORT_DIR" "$ZIP_FILE"
@@ -61,7 +61,7 @@ pkg['scripts'] = {
     'postinstall': 'prisma generate'
 }
 # Rename project
-pkg['name'] = 'alhikmah-lms'
+pkg['name'] = 'albashir-lms'
 pkg['version'] = '1.0.0'
 with open('$EXPORT_DIR/package.json', 'w') as f:
     json.dump(pkg, f, indent=2)
@@ -237,7 +237,7 @@ This guide walks you through deploying the Al-Hikmah LMS to production using Ver
 
 1. Go to https://neon.tech and sign up (free tier is enough).
 2. Click "Create Project".
-3. Name it `alhikmah-lms` (or any name you prefer).
+3. Name it `albashir-lms` (or any name you prefer).
 4. Select the region closest to your users (e.g., `AWS ap-south-1 — Mumbai` for Nigeria, or `AWS us-east-1` for global).
 5. Click "Create Project".
 6. On the project dashboard, find the "Connection Details" section.
@@ -298,7 +298,7 @@ This guide walks you through deploying the Al-Hikmah LMS to production using Ver
 Vercel deploys from a Git repository, so you need to push your code to GitHub first.
 
 1. Create a new repository on GitHub: https://github.com/new
-   - Name: `alhikmah-lms`
+   - Name: `albashir-lms`
    - Set to **Private** (recommended for a school project)
    - Do NOT initialize with README (you already have one)
    - Click "Create repository"
@@ -309,7 +309,7 @@ Vercel deploys from a Git repository, so you need to push your code to GitHub fi
    git add .
    git commit -m "Initial commit: Al-Hikmah LMS"
    git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/alhikmah-lms.git
+   git remote add origin https://github.com/YOUR_USERNAME/albashir-lms.git
    git push -u origin main
    ```
 
@@ -326,7 +326,7 @@ Vercel deploys from a Git repository, so you need to push your code to GitHub fi
 
 2. Click "Add New..." → "Project".
 
-3. Import your `alhikmah-lms` repository from GitHub. (If Vercel cannot see it, click "Adjust GitHub App Permissions" and grant access to the repo.)
+3. Import your `albashir-lms` repository from GitHub. (If Vercel cannot see it, click "Adjust GitHub App Permissions" and grant access to the repo.)
 
 4. Vercel auto-detects Next.js. The default settings should work:
    - Framework Preset: **Next.js**
@@ -349,7 +349,7 @@ Vercel deploys from a Git repository, so you need to push your code to GitHub fi
 
 6. Click "Deploy".
 
-7. Wait 2 to 5 minutes for the build to complete. Vercel will show you a success screen with your production URL (e.g., `https://alhikmah-lms.vercel.app`).
+7. Wait 2 to 5 minutes for the build to complete. Vercel will show you a success screen with your production URL (e.g., `https://albashir-lms.vercel.app`).
 
 8. Click on the URL to view your live site.
 
@@ -357,13 +357,13 @@ Vercel deploys from a Git repository, so you need to push your code to GitHub fi
 
 ## Step 5: Update NEXT_PUBLIC_APP_URL
 
-After your first deploy, Vercel gives you a production URL like `https://alhikmah-lms.vercel.app`. You need to set this so Paystack and Flutterwave can redirect back to your site after payment.
+After your first deploy, Vercel gives you a production URL like `https://albashir-lms.vercel.app`. You need to set this so Paystack and Flutterwave can redirect back to your site after payment.
 
 1. Go to your Vercel project dashboard.
 2. Click "Settings" → "Environment Variables".
 3. Find `NEXT_PUBLIC_APP_URL` and update its value to your Vercel URL:
    ```
-   https://alhikmah-lms.vercel.app
+   https://albashir-lms.vercel.app
    ```
 4. Click "Save".
 5. Go to "Deployments" → click the three dots next to your latest deployment → "Redeploy".
@@ -482,7 +482,7 @@ DEPLOYEOF
 
 echo "==> Creating the ZIP archive..."
 cd /tmp
-zip -r "$ZIP_FILE" "alhikmah-lms-export/" \
+zip -r "$ZIP_FILE" "albashir-lms-export/" \
   -x "*.DS_Store" \
   -x "*/node_modules/*" \
   -x "*/.next/*" \

@@ -83,7 +83,7 @@ export function AdminCourses({ onNavigate }: { onNavigate: (v: string, p?: any) 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((c) => (
             <Card key={c.id} className="flex flex-col hover:shadow-md transition-shadow">
-              <div className="h-20 alhikmah-gradient rounded-t-lg flex items-center justify-center">
+              <div className="h-20 albashir-gradient rounded-t-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">{c.code}</span>
               </div>
               <CardContent className="p-4 flex-1 flex flex-col gap-3">

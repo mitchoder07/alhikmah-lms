@@ -2,7 +2,7 @@ import { db } from '../src/lib/db'
 import { hashPassword } from '../src/lib/auth'
 
 async function main() {
-  console.log('Seeding Al-Hikmah LMS...')
+  console.log('Seeding Al-Bashir Academy Academy LMS...')
 
   // Create admin
   const admin = await db.user.upsert({
@@ -92,7 +92,7 @@ async function main() {
   await db.quizQuestion.create({ data: { quizId: quiz1.id, text: 'Opportunity cost refers to:', options: JSON.stringify(['Money spent on opportunity', 'Best alternative forgone', 'Total cost', 'Variable cost']), answer: '1', marks: 1, position: 2 } })
 
   for (const s of studentRecords) {
-    await db.enrollment.create({ data: { courseId: eco201.id, userId: s.id, lecturerApproved: true } })
+    await db.enrollment.create({ data: { courseId: eco201.id, userId: s.id, lecturerApproved: false } })
   }
 
   await db.lessonProgress.create({ data: { lessonId: lesson1.id, userId: studentRecords[0].id, completed: true, watchedSec: 1500 } })
@@ -106,18 +106,8 @@ async function main() {
     data: { authorId: lecturer.id, title: 'Welcome to ECO201 — Microeconomic Theory I', body: 'Dear students, welcome to a new semester. Please ensure you review the course outline and complete the introductory quiz by Friday.' }
   })
 
-  await db.payment.upsert({
-    where: { reference: 'PSK_DEMO_001' },
-    update: {}, // Do nothing if it exists
-    create: {
-      userId: studentRecords[0].id,
-      courseId: eco201.id,
-      amount: 5000,
-      provider: 'paystack',
-      reference: 'PSK_DEMO_001',
-      status: 'success',
-      paidAt: new Date()
-    }
+  await db.payment.create({
+    data: { userId: studentRecords[0].id, courseId: eco201.id, amount: 5000, provider: 'paystack', reference: 'PSK_DEMO_001', status: 'success', paidAt: new Date() }
   })
 
   console.log('Seed complete!')

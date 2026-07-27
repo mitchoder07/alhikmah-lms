@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         include: { course: true, user: true }
       })
       if (enrollment) {
-        const certNumber = `AHK-CERT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        const certNumber = `ABA-CERT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
         const cert = await db.certificate.create({
           data: {
             enrollmentId: payment.enrollmentId,

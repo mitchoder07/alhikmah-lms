@@ -98,7 +98,7 @@ export function AdminRevenue() {
             <div key={i} className="flex items-center gap-4">
               <div className="w-12 text-xs text-muted-foreground">{m.label}</div>
               <div className="flex-1 h-6 bg-secondary rounded relative overflow-hidden">
-                <div className="h-full alhikmah-gradient" style={{ width: `${(m.revenue / monthlyMax) * 100}%` }} />
+                <div className="h-full albashir-gradient" style={{ width: `${(m.revenue / monthlyMax) * 100}%` }} />
               </div>
               <div className="w-24 text-right text-xs font-medium">₦{m.revenue.toLocaleString()}</div>
               <Badge variant="secondary" className="text-[10px]">{m.certs} cert{m.certs !== 1 ? 's' : ''}</Badge>

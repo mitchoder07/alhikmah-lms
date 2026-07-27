@@ -45,7 +45,7 @@ export function StudentCertificates({ onNavigate }: { onNavigate: (v: string, p?
           <div className="grid md:grid-cols-2 gap-4">
             {issued.map((e) => (
               <Card key={e.id} className="overflow-hidden border-gold/40">
-                <div className="alhikmah-gradient p-5 text-white">
+                <div className="albashir-gradient p-5 text-white">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-gold/90">Certificate of Completion</p>

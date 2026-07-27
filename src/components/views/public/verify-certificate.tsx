@@ -57,8 +57,8 @@ export function CertificateVerifyPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-9 w-9 rounded-full alhikmah-gradient flex items-center justify-center text-white font-bold text-[9px] flex-shrink-0">HUI</div>
-            <p className="font-semibold text-xs sm:text-sm truncate">Al-Hikmah University · Certificate Verification</p>
+            <div className="h-9 w-9 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px] flex-shrink-0">ABA</div>
+            <p className="font-semibold text-xs sm:text-sm truncate">Al-Bashir Academy · Certificate Verification</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="flex-shrink-0"><ArrowLeft className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Home</span></Button>
         </div>
@@ -85,7 +85,7 @@ export function CertificateVerifyPage() {
                   <Label htmlFor="cert" className="sr-only">Certificate Number</Label>
                   <Input
                     id="cert"
-                    placeholder="e.g. AHK-CERT-2025-AB12CD"
+                    placeholder="e.g. ABA-CERT-2025-AB12CD"
                     value={certNumber}
                     onChange={(e) => setCertNumber(e.target.value)}
                     className="font-mono uppercase"
@@ -106,7 +106,7 @@ export function CertificateVerifyPage() {
               )}
               {result && (
                 <div className="mt-6 border-2 border-gold rounded-lg overflow-hidden">
-                  <div className="alhikmah-gradient p-4 text-white text-center">
+                  <div className="albashir-gradient p-4 text-white text-center">
                     <Award className="h-10 w-10 mx-auto mb-2 text-gold" />
                     <p className="text-xs uppercase tracking-widest text-gold/90">Certificate of Completion</p>
                     <p className="text-lg font-bold mt-1">Verified Authentic</p>
@@ -136,14 +136,14 @@ export function CertificateVerifyPage() {
 
           <div className="mt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Try: <button className="font-mono text-primary hover:underline" onClick={() => setCertNumber('AHK-CERT-2025-DEMO01')}>AHK-CERT-2025-DEMO01</button> (after issuing a demo cert)
+              Try: <button className="font-mono text-primary hover:underline" onClick={() => setCertNumber('ABA-CERT-2025-DEMO01')}>ABA-CERT-2025-DEMO01</button> (after issuing a demo cert)
             </p>
           </div>
         </div>
       </div>
 
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Al-Hikmah University, Ilorin · Department of Economics
+        © {new Date().getFullYear()} Al-Bashir Academy · Department of Economics
       </footer>
     </div>
   )

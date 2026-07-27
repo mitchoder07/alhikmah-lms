@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from 'react'
 import { AppShell, NavItem } from '@/components/lms/app-shell'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck, FileText } from 'lucide-react'
 import { useSession } from '@/components/app-provider'
 import { AdminDashboard } from './dashboard'
 import { AdminCourses } from './courses'
 import { AdminStudents } from './students'
 import { AdminGradebook } from './gradebook'
+import { AdminTranscript } from './transcript'
 import { AdminRevenue } from './revenue'
 import { AdminCertificates } from './certificates'
 import { AdminAnnouncements } from './announcements'
@@ -38,6 +39,7 @@ export function AdminApp() {
     }
     items.push(
       { id: 'gradebook', label: 'Gradebook', icon: BarChart3 },
+      { id: 'transcript', label: 'Transcripts', icon: FileText },
       { id: 'certificates', label: 'Certificates', icon: Award },
       { id: 'revenue', label: 'Revenue', icon: Settings },
       { id: 'announcements', label: 'Announcements', icon: Megaphone },
@@ -63,6 +65,7 @@ export function AdminApp() {
       {view === 'students' && <AdminStudents />}
       {view === 'lecturers' && user?.role === 'ADMIN' && <AdminLecturers />}
       {view === 'gradebook' && <AdminGradebook />}
+      {view === 'transcript' && <AdminTranscript />}
       {view === 'certificates' && <AdminCertificates />}
       {view === 'revenue' && <AdminRevenue />}
       {view === 'announcements' && <AdminAnnouncements />}

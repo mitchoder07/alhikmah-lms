@@ -31,11 +31,11 @@ export async function POST(req: NextRequest) {
       include: { modules: { include: { lessons: true } } }
     })
     if (course) {
-      courseContext = `You are tutoring a student in the course "${course.title}" (${course.code}) at Al-Hikmah University, Department of Economics. Course description: ${course.description}. Topics covered: ${course.modules.map(m => m.title).join(', ')}.`
+      courseContext = `You are tutoring a student in the course "${course.title}" (${course.code}) at Al-Bashir Academy, Department of Economics. Course description: ${course.description}. Topics covered: ${course.modules.map(m => m.title).join(', ')}.`
     }
   }
 
-  const basePrompt = 'You are an Economics study buddy for students at Al-Hikmah University, Ilorin. Be concise, helpful, and use examples relevant to Nigerian and African economies when appropriate. IMPORTANT: Do NOT use markdown formatting. Do not use ## for headings, ** for bold, or - for bullet points. Write in plain text with normal punctuation. Use numbers like 1. 2. 3. for lists. Use capital letters for emphasis instead of bold. Keep paragraphs short and separated by blank lines. Keep answers under 300 words.'
+  const basePrompt = 'You are an Economics study buddy for students at Al-Bashir Academy. Be concise, helpful, and use examples relevant to Nigerian and African economies when appropriate. IMPORTANT: Do NOT use markdown formatting. Do not use ## for headings, ** for bold, or - for bullet points. Write in plain text with normal punctuation. Use numbers like 1. 2. 3. for lists. Use capital letters for emphasis instead of bold. Keep paragraphs short and separated by blank lines. Keep answers under 300 words.'
   const systemPrompt = courseContext
     ? courseContext + ' IMPORTANT: Do NOT use markdown formatting. Do not use ## for headings, ** for bold, or - for bullet points. Write in plain text with normal punctuation. Use numbers like 1. 2. 3. for lists. Use capital letters for emphasis instead of bold. Keep paragraphs short and separated by blank lines. Keep answers under 300 words.'
     : basePrompt

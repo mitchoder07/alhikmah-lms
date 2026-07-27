@@ -256,7 +256,7 @@ export function StudentCourses({ onNavigate }: { onNavigate: (v: string, p?: any
             const accessFee = c.courseFee ?? 0
             return (
               <Card key={c.id} className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
-                <div className="h-28 alhikmah-gradient relative flex items-center justify-center">
+                <div className="h-28 albashir-gradient relative flex items-center justify-center">
                   <span className="text-white font-bold text-2xl">{c.code}</span>
                   <div className="absolute top-3 left-3 flex gap-1.5">
                     <Badge className="bg-gold text-black border-0">{c.level} Level</Badge>

@@ -35,7 +35,7 @@ export function StudentApp() {
 
   return (
     <AppShell
-      brand={{ title: 'Student Portal', subtitle: 'Dept. of Economics · Al-Hikmah Univ.' }}
+      brand={{ title: 'Student Portal', subtitle: 'Dept. of Economics · Al-Bashir Academy' }}
       navItems={navItems}
       activeView={view}
       onNavigate={(id) => navigate(id)}

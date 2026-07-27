@@ -26,8 +26,8 @@ export function LandingPage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
         <div className="px-4 h-14 flex items-center justify-between gap-2 max-w-7xl mx-auto">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-full alhikmah-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">HUI</div>
-            <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Hikmah University</span>
+            <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">ABA</div>
+            <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Bashir Academy</span>
           </button>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push('/login')} className="text-xs h-8 px-2.5 sm:px-3">Sign in</Button>
@@ -38,7 +38,7 @@ export function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#003d1f]">
-        <div className="absolute inset-0 alhikmah-gradient" />
+        <div className="absolute inset-0 albashir-gradient" />
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, rgba(212,175,55,0.4) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(212,175,55,0.3) 0%, transparent 50%)' }} />
 
         <div className="relative px-4 py-10 sm:py-16 lg:py-24 text-white max-w-7xl mx-auto">
@@ -54,7 +54,7 @@ export function LandingPage() {
             </h1>
 
             <p className="text-sm sm:text-lg text-white/85 mb-7 max-w-2xl leading-relaxed">
-              A modern learning portal from the Department of Economics, Al-Hikmah University, Ilorin.
+              A modern learning portal from the Department of Economics, Al-Bashir Academy.
               Open to everyone. Stream lectures, attempt quizzes, get help from your AI study buddy, and pay for certificates securely via Paystack or Flutterwave.
             </p>
 
@@ -118,11 +118,11 @@ export function LandingPage() {
             { icon: Users, title: 'Student Roster & Gradebook', desc: 'Bulk import students, view a course by student grade matrix, and approve candidates for certification.' },
             { icon: Smartphone, title: 'Installable PWA', desc: 'Add the portal to your phone home screen. Works offline for already-downloaded lessons and materials.' },
             { icon: GraduationCap, title: 'Moodle-style Modules', desc: 'Familiar hierarchical structure: Course, then Modules, then Lessons, Files, Quizzes, and Progress.' },
-            { icon: Sparkles, title: 'Open to Everyone', desc: 'Al-Hikmah students and external learners alike. Sign up with any email (Gmail, Yahoo, Outlook, etc.).' },
+            { icon: Sparkles, title: 'Open to Everyone', desc: 'Al-Bashir students and external learners alike. Sign up with any email (Gmail, Yahoo, Outlook, etc.).' },
           ].map((f, i) => (
             <Card key={i} className="hover:shadow-md transition-shadow border-border/60">
               <CardHeader className="p-4 sm:p-6">
-                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg alhikmah-gradient flex items-center justify-center mb-2 sm:mb-3 shadow-sm">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg albashir-gradient flex items-center justify-center mb-2 sm:mb-3 shadow-sm">
                   <f.icon className="h-5 w-5 text-white" />
                 </div>
                 <CardTitle className="text-base sm:text-lg">{f.title}</CardTitle>
@@ -140,7 +140,7 @@ export function LandingPage() {
           <p className="text-base sm:text-xl lg:text-2xl font-medium text-foreground leading-relaxed mb-3 sm:mb-4">
             "This portal brings our Economics curriculum into the digital age. Students can now learn at their own pace, ask an AI tutor questions anytime, and earn certificates that employers can verify online."
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground">Department of Economics, Al-Hikmah University, Ilorin</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Department of Economics, Al-Bashir Academy</p>
         </div>
       </section>
 
@@ -148,7 +148,7 @@ export function LandingPage() {
       <section className="border-t">
         <div className="px-4 py-12 sm:py-16 text-center max-w-xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3">Ready to start learning?</h2>
-          <p className="text-sm sm:text-base text-muted-foreground mb-6">Create a free student account with any email: Gmail, Yahoo, Outlook, or your Al-Hikmah email. Enroll in Economics courses today.</p>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6">Create a free student account with any email: Gmail, Yahoo, Outlook, or your Al-Bashir email. Enroll in Economics courses today.</p>
           <Button size="lg" onClick={() => router.push('/register')} className="bg-primary hover:bg-primary/90 h-12 text-sm sm:text-base">
             Create Account <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -175,7 +175,7 @@ export function LandingPage() {
                     <img src={post.imageUrl} alt={post.title} className="h-full w-full object-cover" />
                   </div>
                 ) : (
-                  <div className="aspect-video w-full alhikmah-gradient flex items-center justify-center">
+                  <div className="aspect-video w-full albashir-gradient flex items-center justify-center">
                     <Newspaper className="h-10 w-10 text-white/80" />
                   </div>
                 )}
@@ -218,8 +218,8 @@ export function LandingPage() {
         <div className="px-4 py-8 max-w-7xl mx-auto grid sm:grid-cols-3 gap-6 text-sm">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-full alhikmah-gradient flex items-center justify-center text-white font-bold text-[9px]">HUI</div>
-              <p className="font-semibold">Al-Hikmah University LMS</p>
+              <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px]">ABA</div>
+              <p className="font-semibold">Al-Bashir Academy LMS</p>
             </div>
             <p className="text-muted-foreground text-xs sm:text-sm">Department of Economics, Ilorin, Kwara State, Nigeria.</p>
           </div>
@@ -237,7 +237,7 @@ export function LandingPage() {
           </div>
         </div>
         <div className="border-t py-4 text-center text-[11px] sm:text-xs text-muted-foreground px-4">
-          © {new Date().getFullYear()} Al-Hikmah University, Ilorin · Department of Economics · Built with care for educators.
+          © {new Date().getFullYear()} Al-Bashir Academy · Department of Economics · Built with care for educators.
         </div>
       </footer>
     </div>

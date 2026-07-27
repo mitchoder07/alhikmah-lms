@@ -22,7 +22,7 @@ async function main() {
     // Update it to use a recognizable demo number
     await db.certificate.update({
       where: { id: existing.id },
-      data: { certificateNumber: 'AHK-CERT-2025-DEMO01', score: 78 },
+      data: { certificateNumber: 'ABA-CERT-2025-DEMO01', score: 78 },
     })
     console.log('Updated demo certificate:', existing.id)
   } else {
@@ -31,7 +31,7 @@ async function main() {
         enrollmentId: enrollment.id,
         userId: aisha.id,
         courseId: eco201.id,
-        certificateNumber: 'AHK-CERT-2025-DEMO01',
+        certificateNumber: 'ABA-CERT-2025-DEMO01',
         score: 78,
         verified: true,
       },

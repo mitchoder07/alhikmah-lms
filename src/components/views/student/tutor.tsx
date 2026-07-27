@@ -11,7 +11,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 
 export function StudentTutor() {
   const [messages, setMessages] = useState<Msg[]>([
-    { role: 'assistant', content: "Assalamu alaikum! I'm your AI Economics study buddy at Al-Hikmah University. I can help you with:\n\n• Microeconomics (demand, supply, elasticity, market structures)\n• Macroeconomics (GDP, inflation, fiscal & monetary policy)\n• Monetary economics and central banking\n• Development economics\n• Econometrics (regression, hypothesis testing)\n\nWhat would you like to learn today?" }
+    { role: 'assistant', content: "Assalamu alaikum! I'm your AI Economics study buddy at Al-Bashir Academy. I can help you with:\n\n• Microeconomics (demand, supply, elasticity, market structures)\n• Macroeconomics (GDP, inflation, fiscal & monetary policy)\n• Monetary economics and central banking\n• Development economics\n• Econometrics (regression, hypothesis testing)\n\nWhat would you like to learn today?" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,7 +59,7 @@ export function StudentTutor() {
     <div className="max-w-4xl mx-auto space-y-4">
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <div className="h-11 w-11 rounded-full alhikmah-gradient-gold flex items-center justify-center">
+          <div className="h-11 w-11 rounded-full albashir-gradient-gold flex items-center justify-center">
             <Brain className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -82,7 +82,7 @@ export function StudentTutor() {
               {messages.map((m, i) => (
                 <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {m.role === 'assistant' && (
-                    <div className="h-8 w-8 rounded-full alhikmah-gradient-gold flex items-center justify-center flex-shrink-0">
+                    <div className="h-8 w-8 rounded-full albashir-gradient-gold flex items-center justify-center flex-shrink-0">
                       <Brain className="h-4 w-4 text-white" />
                     </div>
                   )}
@@ -95,7 +95,7 @@ export function StudentTutor() {
               ))}
               {loading && (
                 <div className="flex gap-3 justify-start">
-                  <div className="h-8 w-8 rounded-full alhikmah-gradient-gold flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full albashir-gradient-gold flex items-center justify-center flex-shrink-0">
                     <Brain className="h-4 w-4 text-white" />
                   </div>
                   <div className="bg-secondary rounded-lg px-4 py-2.5 text-sm flex items-center gap-2">

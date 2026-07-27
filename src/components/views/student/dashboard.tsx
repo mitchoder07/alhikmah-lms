@@ -50,7 +50,7 @@ export function StudentDashboard({ onNavigate }: { onNavigate: (v: string, p?: a
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Welcome */}
-      <div className="alhikmah-gradient rounded-xl p-4 sm:p-6 text-white">
+      <div className="albashir-gradient rounded-xl p-4 sm:p-6 text-white">
         <p className="text-xs sm:text-sm text-white/80">Welcome back,</p>
         <h2 className="text-xl sm:text-2xl font-bold mb-1 truncate">{user?.name}</h2>
         <p className="text-xs sm:text-sm text-white/90 truncate">{user?.matricNumber || 'Student'} · Department of Economics</p>
@@ -96,7 +96,7 @@ export function StudentDashboard({ onNavigate }: { onNavigate: (v: string, p?: a
                 return (
                   <Card key={e.id} className="hover:shadow-sm transition-shadow cursor-pointer" onClick={() => onNavigate('course-player', { courseId: e.course.id })}>
                     <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
-                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg alhikmah-gradient flex items-center justify-center text-white font-bold text-[9px] sm:text-xs flex-shrink-0">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg albashir-gradient flex items-center justify-center text-white font-bold text-[9px] sm:text-xs flex-shrink-0">
                         {e.course.code.slice(0, 6)}
                       </div>
                       <div className="flex-1 min-w-0">

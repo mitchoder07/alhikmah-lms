@@ -6,7 +6,7 @@
 const ROUTES = [
   { path: '/', name: 'Landing Page (Public Home)', desc: 'Hero, features, testimonials, footer. First impression for visitors.' },
   { path: '/login', name: 'Student Sign in', desc: 'Login form for students. Demo credentials shown.' },
-  { path: '/register', name: 'Student Registration', desc: 'Open registration form. Matric optional for non-Al-Hikmah students.' },
+  { path: '/register', name: 'Student Registration', desc: 'Open registration form. Matric optional for non-Al-Bashir students.' },
   { path: '/staff-login', name: 'Staff Portal (Lecturer/Admin)', desc: 'Hidden staff login. Restricted to authorized staff only.' },
   { path: '/verify-certificate', name: 'Public Certificate Verification', desc: 'Anyone can verify a certificate by its number. Shows full certificate preview.' },
 ]
@@ -17,9 +17,9 @@ export default function SitemapPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full alhikmah-gradient flex items-center justify-center text-white font-bold text-[9px]">HUI</div>
+            <div className="h-9 w-9 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px]">ABA</div>
             <div>
-              <p className="font-semibold text-sm">Al-Hikmah LMS · Page Sitemap</p>
+              <p className="font-semibold text-sm">Al-Bashir Academy LMS · Page Sitemap</p>
               <p className="text-[11px] text-muted-foreground">For Figma import via html.to.design plugin</p>
             </div>
           </div>
@@ -27,7 +27,7 @@ export default function SitemapPage() {
       </header>
 
       <div className="container mx-auto px-4 py-10 max-w-5xl">
-        <div className="alhikmah-gradient rounded-xl p-6 text-white mb-8">
+        <div className="albashir-gradient rounded-xl p-6 text-white mb-8">
           <h1 className="text-2xl font-bold mb-2">Import all pages into Figma</h1>
           <p className="text-sm text-white/90 mb-4">
             The html.to.design plugin imports one URL at a time. Use the list below: copy each URL, paste it into the plugin, and click Import. Repeat for each page you want in your Figma file.
@@ -118,7 +118,7 @@ export default function SitemapPage() {
       </div>
 
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Al-Hikmah University, Ilorin · Department of Economics
+        © {new Date().getFullYear()} Al-Bashir Academy · Department of Economics
       </footer>
     </div>
   )

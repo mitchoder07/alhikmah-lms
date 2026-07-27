@@ -46,14 +46,14 @@
 
 :root {
   --radius: 0.625rem;
-  /* Al-Hikmah University green: #006633 */
+  /* Al-Bashir University green: #006633 */
   --background: oklch(0.985 0.005 145);
   --foreground: oklch(0.18 0.04 145);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.04 145);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.04 145);
-  /* Al-Hikmah green */
+  /* Al-Bashir green */
   --primary: oklch(0.42 0.13 150);
   --primary-foreground: oklch(0.99 0.005 145);
   --secondary: oklch(0.96 0.02 145);
@@ -142,25 +142,25 @@
 }
 
 /* Custom scrollbar for long lists */
-.alhikmah-scroll::-webkit-scrollbar {
+.albashir-scroll::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-.alhikmah-scroll::-webkit-scrollbar-track {
+.albashir-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 .alhiklah-scroll::-webkit-scrollbar-thumb,
-.alhikmah-scroll::-webkit-scrollbar-thumb {
+.albashir-scroll::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 3px;
   opacity: 0.4;
 }
 
 /* Brand gradient for hero/cover areas */
-.alhikmah-gradient {
+.albashir-gradient {
   background: linear-gradient(135deg, oklch(0.42 0.13 150) 0%, oklch(0.32 0.10 150) 100%);
 }
-.alhikmah-gradient-gold {
+.albashir-gradient-gold {
   background: linear-gradient(135deg, oklch(0.42 0.13 150) 0%, oklch(0.78 0.14 84) 100%);
 }
 

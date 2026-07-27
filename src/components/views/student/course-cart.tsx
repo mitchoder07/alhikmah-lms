@@ -8,7 +8,7 @@ import { useApi, apiPost } from '@/lib/api'
 import { ShoppingCart, Trash2, Loader2, CreditCard, ShieldCheck, ArrowLeft, Tag, CheckCircle2, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
-const CART_STORAGE_KEY = 'alhikmah-course-cart'
+const CART_STORAGE_KEY = 'albashir-course-cart'
 
 interface Course {
   id: string
@@ -44,7 +44,7 @@ export function saveCartIds(ids: string[]) {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(ids))
   // Dispatch event so other components can re-render
-  window.dispatchEvent(new Event('alhikmah-cart-change'))
+  window.dispatchEvent(new Event('albashir-cart-change'))
 }
 
 export function useCartIds() {
@@ -52,10 +52,10 @@ export function useCartIds() {
 
   useEffect(() => {
     const onChange = () => setIds(getCartIds())
-    window.addEventListener('alhikmah-cart-change', onChange)
+    window.addEventListener('albashir-cart-change', onChange)
     window.addEventListener('storage', onChange)
     return () => {
-      window.removeEventListener('alhikmah-cart-change', onChange)
+      window.removeEventListener('albashir-cart-change', onChange)
       window.removeEventListener('storage', onChange)
     }
   }, [])
@@ -260,7 +260,7 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
               <Card key={c.id} className="hover:shadow-sm transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-12 w-12 rounded-md alhikmah-gradient flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+                    <div className="h-12 w-12 rounded-md albashir-gradient flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
                       {c.code}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -92,7 +92,7 @@ export function AdminCertificates() {
           <CardDescription>Issue certificates manually or let students pay via Paystack.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y max-h-[600px] overflow-y-auto alhikmah-scroll">
+          <div className="divide-y max-h-[600px] overflow-y-auto albashir-scroll">
             {allEnrollments.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No enrollments found.</div>
             ) : allEnrollments.map((e) => (

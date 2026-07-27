@@ -64,7 +64,7 @@ export function AdminStudents() {
               <p className="text-sm text-muted-foreground">No students found.</p>
             </div>
           ) : (
-            <div className="divide-y max-h-[600px] overflow-y-auto alhikmah-scroll">
+            <div className="divide-y max-h-[600px] overflow-y-auto albashir-scroll">
               {students.map((s) => (
                 <div key={s.id} className="p-4 flex items-center gap-3 hover:bg-secondary/30">
                   <Avatar className="h-10 w-10 flex-shrink-0">

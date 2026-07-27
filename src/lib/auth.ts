@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { db } from '@/lib/db'
 import crypto from 'crypto'
 
-export const SESSION_COOKIE = 'alhikmah_session'
+export const SESSION_COOKIE = 'albashir_session'
 
 function generateToken() {
   return crypto.randomBytes(32).toString('hex')
@@ -23,8 +23,9 @@ export async function createSession(userId: string) {
     secure: isProduction,
     sameSite: 'lax',
     path: '/',
-    // Session-only cookie: no maxAge means it expires when the browser closes
-    // This prevents someone from reopening a tab and being auto-logged-in
+    // 30-minute session timeout — standard for portals handling payments
+    // After 30 minutes of inactivity, user must log in again
+    maxAge: 30 * 60,
   })
   return token
 }
