@@ -54,7 +54,7 @@ export function LoginPage() {
             <ArrowLeft className="h-3 w-3" /> Back to home
           </button>
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0">ABA</div>
+            <img src="/icon-192.png?v=2" alt="Al-Bashir Academy" className="h-11 w-11 rounded-full flex-shrink-0" />
             <div className="min-w-0">
               <CardTitle className="text-lg sm:text-xl">Sign in</CardTitle>
               <CardDescription className="text-xs sm:text-sm">Access your Economics courses</CardDescription>

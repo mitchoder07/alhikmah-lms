@@ -288,3 +288,49 @@ Stage Summary:
 - All components use `'use client'`, shadcn/ui components, `useApi`/`apiPost` from `@/lib/api`, `toast` from `sonner`, icons from `lucide-react`. Transcript print HTML mirrors the certificate download pattern (`window.open('', '_blank')` + `document.write`).
 - Did NOT modify `prisma/schema.prisma`. Did NOT run `db:push` or `bun run dev`.
 - `bun run lint` passes cleanly (0 errors, 0 warnings). Dev server log shows clean compiles for the new routes and the expected 403 responses on unauthenticated requests.
+
+---
+Task ID: bugfix-player-exam-errors
+Agent: full-stack-developer
+Task: Fix YouTube embed URL, block final exam until lessons complete, handle JSON parse errors, gate Mark-as-Complete behind quiz pass, auto-scroll AI tutor panel
+
+Work Log:
+- `src/lib/api.ts`:
+  - Reworked `apiPost`, `apiPatch`, `apiDelete` to read the raw response text first.
+  - Empty body -> returns `{ ok: true }` (handles 204/empty 200/HTML error pages that aren't JSON).
+  - Wraps `JSON.parse` in try/catch; re-throws the original `HTTP <status>` Error if it was a server-sent error, converts `Unexpected end of JSON input` (and similar parse errors) into a friendly `Server error (status). Please try again.` message, and rethrows any other error unchanged.
+- `src/components/views/student/course-player.tsx`:
+  - Added `convertYouTubeUrl(url)` helper that maps `youtube.com/watch?v=ID`, `youtu.be/ID`, and `youtube.com/embed/ID` to the canonical `https://www.youtube.com/embed/ID` form; leaves MP4/direct URLs untouched. Applied to the iframe `src` so lecturers can paste any YouTube link.
+  - Imported `useRef` from react and added `tutorRef`. Added `openTutor()` that opens the panel and scrolls it into view via `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` after a 100ms timeout. Wrapped `<AITutorPanel>` in `<div ref={tutorRef}>`.
+  - Reworked the lesson action buttons:
+    - If `progress[0]?.completed` -> "Completed" badge (unchanged).
+    - Else if the lesson has quizzes -> amber "Pass the quiz to complete this lesson" lock badge (no manual Mark-as-Complete button, since quiz pass is required).
+    - Else -> "Mark as Complete" button (calls `apiPatch`).
+    - The "Take Quiz" button is rendered as the primary variant (default + `bg-primary`) when the lesson is not yet completed, so students are nudged toward it; reverts to `outline` once completed.
+  - Added `handleQuizSubmitted(result?)` callback for `<QuizModal onSubmitted>`: closes the modal, refetches the course, and fire-and-forget calls `apiPatch('/api/courses/{courseId}/lessons/{lessonId}/progress', { completed: true })` when `result.passed === true`, then refetches again. Auto-mark is best-effort and silent on failure.
+  - Improved error handling in `markComplete`: if the caught error message mentions "Unexpected" or "JSON" it surfaces "Server error. Please try again." instead of the raw parse-error text.
+- `src/components/lms/quiz-modal.tsx`:
+  - Exported a new `QuizResult` interface and used it for the local `result` state.
+  - Changed the `onSubmitted` prop type from `() => void` to `((result?: QuizResult) => void) | undefined`. The post-submission "Close" button now calls `onSubmitted?.(result ?? undefined)`, so the parent can detect whether the quiz was passed.
+- `src/components/views/student/final-exam.tsx`:
+  - Added a `CourseProgressData` interface and a second `useApi<CourseProgressData>('/api/courses/${courseId}')` call (next to the existing exam fetch) so we can inspect lesson progress without modifying any backend route.
+  - Flattened modules -> lessons, counted completed (`progress?.[0]?.completed`) vs total. Computed `allLessonsCompleted`.
+  - Inside the `if (!started)` intro branch, before rendering the intro card, added a locked-screen return: if `!allLessonsCompleted && exam.attempts.length === 0`, render a centered Card with a Lock icon, the message "This exam is locked. Complete all lessons in this course first.", a "You have completed X of Y lessons" counter, a small inline progress bar, and a "Back to Course" button. Students with existing attempts are exempt (they were permitted previously) so they can still see results/retry.
+  - Imported `Lock` from `lucide-react`.
+- `src/components/views/admin/course-builder.tsx`:
+  - Updated the LessonEditor's "Video URL" field placeholder from `https://www.youtube.com/embed/...` to `https://www.youtube.com/watch?v=...` and replaced the helper text with: "Paste any YouTube link (watch or embed), YouTube short link, or direct video URL. We'll convert it automatically." (mirrors the new `convertYouTubeUrl` behavior).
+- `src/components/views/admin/courses.tsx`:
+  - Hardened both `createCourse` and `deleteCourse` catch blocks: if the caught error message mentions "Unexpected" or "JSON" -> toast "Server error. Please try again."; otherwise fall back to `e.message` (already friendly thanks to the new `api.ts`) or a final "Failed to {create|delete} course. Please try again." default. Prevents the raw "Unexpected end of JSON input" from ever surfacing in a toast.
+
+Files touched:
+- `src/lib/api.ts`
+- `src/components/views/student/course-player.tsx`
+- `src/components/views/student/final-exam.tsx`
+- `src/components/lms/quiz-modal.tsx`
+- `src/components/views/admin/course-builder.tsx`
+- `src/components/views/admin/courses.tsx`
+
+Verification:
+- `bun run lint` -> exit 0, no errors, no warnings.
+- `tail dev.log` shows clean compiles after edits, no runtime errors.
+- Did NOT modify `prisma/schema.prisma`. Did NOT run `db:push` or `bun run dev`.

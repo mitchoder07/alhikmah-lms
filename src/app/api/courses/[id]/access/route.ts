@@ -165,7 +165,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       customizations: {
         title: 'Al-Bashir Academy LMS Course Access',
         description: `Course access fee for ${course.code}`,
-        logo: '/icon-192.png',
+        logo: '/icon-192.png?v=2',
       },
     }),
   })

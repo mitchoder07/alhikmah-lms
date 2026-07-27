@@ -57,7 +57,7 @@ export function CertificateVerifyPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-9 w-9 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px] flex-shrink-0">ABA</div>
+            <img src="/icon-192.png?v=2" alt="Al-Bashir Academy" className="h-9 w-9 rounded-full flex-shrink-0" />
             <p className="font-semibold text-xs sm:text-sm truncate">Al-Bashir Academy · Certificate Verification</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="flex-shrink-0"><ArrowLeft className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Home</span></Button>

@@ -17,7 +17,7 @@ export default function SitemapPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px]">ABA</div>
+            <img src="/icon-192.png?v=2" alt="Logo" className="h-9 w-9 rounded-full" />
             <div>
               <p className="font-semibold text-sm">Al-Bashir Academy LMS · Page Sitemap</p>
               <p className="text-[11px] text-muted-foreground">For Figma import via html.to.design plugin</p>

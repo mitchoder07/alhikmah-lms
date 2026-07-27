@@ -26,8 +26,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
         <div className="px-4 h-14 flex items-center justify-between gap-2 max-w-7xl mx-auto">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">ABA</div>
-            <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Bashir Academy</span>
+            <img src="/logo-full.png?v=2" alt="Al-Bashir Academy" className="h-10 sm:h-12 w-auto flex-shrink-0" />
           </button>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push('/login')} className="text-xs h-8 px-2.5 sm:px-3">Sign in</Button>
@@ -53,9 +52,14 @@ export function LandingPage() {
               <span className="text-gold">Earn Verified Certificates.</span>
             </h1>
 
-            <p className="text-sm sm:text-lg text-white/85 mb-7 max-w-2xl leading-relaxed">
-              A modern learning portal from the Department of Economics, Al-Bashir Academy.
+            <p className="text-sm sm:text-lg text-white/85 mb-3 max-w-2xl leading-relaxed">
+              A modern learning portal from the Department of Economics.
               Open to everyone. Stream lectures, attempt quizzes, get help from your AI study buddy, and pay for certificates securely via Paystack or Flutterwave.
+            </p>
+
+            {/* Slogan */}
+            <p className="text-xs sm:text-sm text-gold font-semibold tracking-widest mb-7">
+              KNOWLEDGE • INTEGRITY • EXCELLENCE
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2.5 mb-8">
@@ -218,7 +222,7 @@ export function LandingPage() {
         <div className="px-4 py-8 max-w-7xl mx-auto grid sm:grid-cols-3 gap-6 text-sm">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px]">ABA</div>
+              <img src="/icon-192.png?v=2" alt="Logo" className="h-8 w-8 rounded-full" />
               <p className="font-semibold">Al-Bashir Academy LMS</p>
             </div>
             <p className="text-muted-foreground text-xs sm:text-sm">Department of Economics, Ilorin, Kwara State, Nigeria.</p>

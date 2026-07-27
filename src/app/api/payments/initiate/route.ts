@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       customizations: {
         title: 'Al-Bashir Academy LMS Certificate',
         description: `Certificate fee for ${enrollment.course.code}`,
-        logo: '/icon-192.png',
+        logo: '/icon-192.png?v=2',
       },
     })
   })

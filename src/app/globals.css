@@ -122,9 +122,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   /* Ensure all clickable elements show pointer cursor */
   button,
   [role="button"],
@@ -135,6 +137,7 @@
   [tabindex]:not([tabindex="-1"]) {
     cursor: pointer;
   }
+
   button:disabled,
   [role="button"][aria-disabled="true"] {
     cursor: not-allowed;
@@ -146,9 +149,11 @@
   width: 6px;
   height: 6px;
 }
+
 .albashir-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .alhiklah-scroll::-webkit-scrollbar-thumb,
 .albashir-scroll::-webkit-scrollbar-thumb {
   background: var(--primary);
@@ -160,6 +165,7 @@
 .albashir-gradient {
   background: linear-gradient(135deg, oklch(0.42 0.13 150) 0%, oklch(0.32 0.10 150) 100%);
 }
+
 .albashir-gradient-gold {
   background: linear-gradient(135deg, oklch(0.42 0.13 150) 0%, oklch(0.78 0.14 84) 100%);
 }
@@ -168,9 +174,11 @@
 .text-gold {
   color: var(--gold);
 }
+
 .bg-gold {
   background-color: var(--gold);
 }
+
 .border-gold {
   border-color: var(--gold);
 }

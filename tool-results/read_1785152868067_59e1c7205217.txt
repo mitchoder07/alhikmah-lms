@@ -1,0 +1,604 @@
+     1→'use client'
+     2→
+     3→import { useApi, apiPost, apiPatch, apiDelete } from '@/lib/api'
+     4→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+     5→import { Button } from '@/components/ui/button'
+     6→import { Input } from '@/components/ui/input'
+     7→import { Label } from '@/components/ui/label'
+     8→import { Textarea } from '@/components/ui/textarea'
+     9→import { Badge } from '@/components/ui/badge'
+    10→import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+    11→import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+    12→import { ChevronLeft, Plus, Trash2, FileText, Video, File, Download, Pencil, GripVertical, Play, Loader2, X, Upload, PlusCircle, Radio } from 'lucide-react'
+    13→import { useState, useRef, useEffect } from 'react'
+    14→import { toast } from 'sonner'
+    15→import { FinalExamButton } from './final-exam-editor'
+    16→import { ImageUpload } from '@/components/lms/image-upload'
+    17→
+    18→interface CourseData {
+    19→  course: {
+    20→    id: string; code: string; title: string; description: string; level: string; certificateFee: number
+    21→    liveClassUrl?: string | null; liveClassTitle?: string | null; liveClassScheduledAt?: string | null
+    22→    lecturer: { name: string }
+    23→    modules: Array<{
+    24→      id: string; title: string; description?: string | null; position: number
+    25→      lessons: Array<{
+    26→        id: string; title: string; description?: string | null; content?: string | null; videoUrl?: string | null; duration: number; position: number; isPreview: boolean
+    27→        files: Array<{ id: string; filename: string; fileUrl: string; fileType: string; fileSize: number }>
+    28→        quizzes: Array<{ id: string; title: string; passMark: number; questions: Array<{ id: string; text: string; options: string; answer: string; marks: number }> }>
+    29→      }>
+    30→    }>
+    31→  }
+    32→}
+    33→
+    34→export function AdminCourseBuilder({ courseId, onNavigate }: { courseId: string; onNavigate: (v: string, p?: any) => void }) {
+    35→  const { data, loading, refetch } = useApi<CourseData>(`/api/courses/${courseId}`)
+    36→  const course = data?.course
+    37→
+    38→  const [moduleOpen, setModuleOpen] = useState(false)
+    39→  const [moduleForm, setModuleForm] = useState({ title: '', description: '' })
+    40→  const [lessonModal, setLessonModal] = useState<{ moduleId: string; lesson?: any } | null>(null)
+    41→  const [quizModal, setQuizModal] = useState<{ lessonId: string } | null>(null)
+    42→  const [liveClassOpen, setLiveClassOpen] = useState(false)
+    43→
+    44→  const addModule = async () => {
+    45→    try {
+    46→      await apiPost(`/api/admin/courses/${courseId}/modules`, { ...moduleForm, position: course?.modules.length ?? 0 })
+    47→      toast.success('Module added')
+    48→      setModuleOpen(false)
+    49→      setModuleForm({ title: '', description: '' })
+    50→      refetch()
+    51→    } catch (e: any) { toast.error(e.message) }
+    52→  }
+    53→
+    54→  const deleteModule = async (id: string) => {
+    55→    if (!confirm('Delete this module and all its lessons?')) return
+    56→    try {
+    57→      await apiDelete(`/api/admin/modules/${id}`)
+    58→      toast.success('Module deleted')
+    59→      refetch()
+    60→    } catch (e: any) { toast.error(e.message) }
+    61→  }
+    62→
+    63→  const deleteLesson = async (id: string) => {
+    64→    if (!confirm('Delete this lesson?')) return
+    65→    try {
+    66→      await apiDelete(`/api/admin/lessons/${id}`)
+    67→      toast.success('Lesson deleted')
+    68→      refetch()
+    69→    } catch (e: any) { toast.error(e.message) }
+    70→  }
+    71→
+    72→  const deleteFile = async (lessonId: string, fileId: string) => {
+    73→    try {
+    74→      await apiDelete(`/api/admin/lessons/${lessonId}/files/${fileId}`)
+    75→      toast.success('File removed')
+    76→      refetch()
+    77→    } catch (e: any) { toast.error(e.message) }
+    78→  }
+    79→
+    80→  if (loading || !course) {
+    81→    return <div className="text-sm text-muted-foreground">Loading course builder…</div>
+    82→  }
+    83→
+    84→  return (
+    85→    <div className="space-y-4">
+    86→      <button onClick={() => onNavigate('courses')} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+    87→        <ChevronLeft className="h-3 w-3" /> Back to courses
+    88→      </button>
+    89→
+    90→      <div className="flex items-start justify-between gap-4 flex-wrap">
+    91→        <div>
+    92→          <div className="flex items-center gap-2 mb-1">
+    93→            <Badge variant="outline">{course.code}</Badge>
+    94→            <Badge variant="secondary">{course.level} Level</Badge>
+    95→          </div>
+    96→          <h2 className="text-2xl font-bold">{course.title}</h2>
+    97→          <p className="text-sm text-muted-foreground">{course.lecturer.name}</p>
+    98→        </div>
+    99→        <div className="flex gap-2 flex-wrap">
+   100→          <Button variant="outline" onClick={() => setLiveClassOpen(true)} className={course.liveClassUrl ? 'border-primary/30 text-primary' : ''}>
+   101→            <Radio className="h-4 w-4 mr-1" /> {course.liveClassUrl ? 'Edit Live Class' : 'Set Live Class'}
+   102→          </Button>
+   103→          <FinalExamButton courseId={course.id} />
+   104→          <Button onClick={() => setModuleOpen(true)} className="bg-primary hover:bg-primary/90">
+   105→            <Plus className="h-4 w-4 mr-1" /> Add Module
+   106→          </Button>
+   107→        </div>
+   108→      </div>
+   109→
+   110→      {/* Modules & lessons */}
+   111→      <div className="space-y-3">
+   112→        {course.modules.length === 0 ? (
+   113→          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No modules yet. Click "Add Module" to get started.</CardContent></Card>
+   114→        ) : (
+   115→          <Accordion type="multiple" defaultValue={course.modules.map(m => m.id)} className="space-y-3">
+   116→            {course.modules.map((m, mi) => (
+   117→              <AccordionItem key={m.id} value={m.id} className="border rounded-lg px-3">
+   118→                <AccordionTrigger className="hover:no-underline py-3">
+   119→                  <div className="flex items-center gap-3 text-left flex-1">
+   120→                    <div className="h-7 w-7 rounded bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">{mi + 1}</div>
+   121→                    <div className="flex-1 min-w-0">
+   122→                      <p className="font-medium text-sm truncate">{m.title}</p>
+   123→                      <p className="text-[10px] text-muted-foreground">{m.lessons.length} lessons</p>
+   124→                    </div>
+   125→                  </div>
+   126→                </AccordionTrigger>
+   127→                <AccordionContent>
+   128→                  <div className="space-y-2 pt-2">
+   129→                    {m.lessons.length === 0 && <p className="text-xs text-muted-foreground py-2">No lessons in this module yet.</p>}
+   130→                    {m.lessons.map((l, li) => (
+   131→                      <div key={l.id} className="border rounded-lg p-3 bg-card">
+   132→                        <div className="flex items-start justify-between gap-2 mb-2">
+   133→                          <div className="flex-1 min-w-0">
+   134→                            <div className="flex items-center gap-2 mb-1">
+   135→                              <span className="text-xs text-muted-foreground">Lesson {li + 1}</span>
+   136→                              {l.isPreview && <Badge variant="secondary" className="text-[9px] py-0">Preview</Badge>}
+   137→                              {l.videoUrl && <Badge variant="secondary" className="text-[9px] py-0 bg-primary/10 text-primary"><Video className="h-2.5 w-2.5 mr-0.5" /> Video</Badge>}
+   138→                            </div>
+   139→                            <p className="font-medium text-sm">{l.title}</p>
+   140→                            {l.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{l.description}</p>}
+   141→                            <p className="text-[10px] text-muted-foreground mt-1">{l.duration} min · {l.files.length} files · {l.quizzes.length} quizzes</p>
+   142→                          </div>
+   143→                          <div className="flex gap-1">
+   144→                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setLessonModal({ moduleId: m.id, lesson: l })}>
+   145→                              <Pencil className="h-3 w-3" />
+   146→                            </Button>
+   147→                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteLesson(l.id)}>
+   148→                              <Trash2 className="h-3 w-3 text-destructive" />
+   149→                            </Button>
+   150→                          </div>
+   151→                        </div>
+   152→
+   153→                        {/* Files */}
+   154→                        {l.files.length > 0 && (
+   155→                          <div className="space-y-1 mt-2 pt-2 border-t">
+   156→                            {l.files.map((f) => (
+   157→                              <div key={f.id} className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-secondary/50">
+   158→                                {f.fileType === 'video' ? <Video className="h-3 w-3 text-primary" /> :
+   159→                                 f.fileType === 'image' ? <FileText className="h-3 w-3 text-primary" /> :
+   160→                                 <File className="h-3 w-3 text-primary" />}
+   161→                                <a href={f.fileUrl} target="_blank" rel="noreferrer" className="flex-1 truncate hover:text-primary">{f.filename}</a>
+   162→                                <span className="text-[10px] text-muted-foreground">{(f.fileSize/1024).toFixed(0)}KB</span>
+   163→                                <button onClick={() => deleteFile(l.id, f.id)} className="text-destructive hover:bg-destructive/10 p-1 rounded">
+   164→                                  <X className="h-3 w-3" />
+   165→                                </button>
+   166→                              </div>
+   167→                            ))}
+   168→                          </div>
+   169→                        )}
+   170→
+   171→                        <div className="flex gap-2 mt-2 pt-2 border-t">
+   172→                          <FileUploader lessonId={l.id} onDone={refetch} />
+   173→                          <Button size="sm" variant="outline" onClick={() => setLessonModal({ moduleId: m.id, lesson: l })}>
+   174→                            <Pencil className="h-3 w-3 mr-1" /> Edit
+   175→                          </Button>
+   176→                          {l.quizzes.length > 0 ? (
+   177→                            <Button size="sm" variant="outline" onClick={() => setQuizModal({ lessonId: l.id })}>
+   178→                              <Play className="h-3 w-3 mr-1" /> View Quiz
+   179→                            </Button>
+   180→                          ) : (
+   181→                            <Button size="sm" variant="outline" onClick={() => setQuizModal({ lessonId: l.id })}>
+   182→                              <PlusCircle className="h-3 w-3 mr-1" /> Add Quiz
+   183→                            </Button>
+   184→                          )}
+   185→                        </div>
+   186→                      </div>
+   187→                    ))}
+   188→                    <Button size="sm" variant="ghost" className="w-full" onClick={() => setLessonModal({ moduleId: m.id })}>
+   189→                      <Plus className="h-3 w-3 mr-1" /> Add Lesson
+   190→                    </Button>
+   191→                  </div>
+   192→                  <div className="mt-2 pt-2 border-t flex justify-end">
+   193→                    <Button size="sm" variant="ghost" onClick={() => deleteModule(m.id)} className="text-destructive">
+   194→                      <Trash2 className="h-3 w-3 mr-1" /> Delete Module
+   195→                    </Button>
+   196→                  </div>
+   197→                </AccordionContent>
+   198→              </AccordionItem>
+   199→            ))}
+   200→          </Accordion>
+   201→        )}
+   202→      </div>
+   203→
+   204→      {/* Module dialog */}
+   205→      <Dialog open={moduleOpen} onOpenChange={setModuleOpen}>
+   206→        <DialogContent>
+   207→          <DialogHeader>
+   208→            <DialogTitle>Add Module</DialogTitle>
+   209→          </DialogHeader>
+   210→          <div className="space-y-3">
+   211→            <div className="space-y-1.5">
+   212→              <Label>Module Title</Label>
+   213→              <Input value={moduleForm.title} onChange={(e) => setModuleForm({ ...moduleForm, title: e.target.value })} placeholder="Module 1: Introduction to..." />
+   214→            </div>
+   215→            <div className="space-y-1.5">
+   216→              <Label>Description (optional)</Label>
+   217→              <Textarea value={moduleForm.description} onChange={(e) => setModuleForm({ ...moduleForm, description: e.target.value })} rows={3} />
+   218→            </div>
+   219→          </div>
+   220→          <DialogFooter>
+   221→            <Button variant="outline" onClick={() => setModuleOpen(false)}>Cancel</Button>
+   222→            <Button onClick={addModule} disabled={!moduleForm.title} className="bg-primary hover:bg-primary/90">Add Module</Button>
+   223→          </DialogFooter>
+   224→        </DialogContent>
+   225→      </Dialog>
+   226→
+   227→      {/* Lesson dialog */}
+   228→      {lessonModal && (
+   229→        <LessonEditor
+   230→          moduleId={lessonModal.moduleId}
+   231→          lesson={lessonModal.lesson}
+   232→          courseId={courseId}
+   233→          onClose={() => setLessonModal(null)}
+   234→          onSaved={() => { setLessonModal(null); refetch() }}
+   235→        />
+   236→      )}
+   237→
+   238→      {/* Quiz dialog */}
+   239→      {quizModal && (
+   240→        <QuizEditor lessonId={quizModal.lessonId} courseId={courseId} onClose={() => setQuizModal(null)} onSaved={() => { setQuizModal(null); refetch() }} />
+   241→      )}
+   242→
+   243→      {/* Live class dialog */}
+   244→      {liveClassOpen && (
+   245→        <LiveClassEditor
+   246→          course={course}
+   247→          onClose={() => setLiveClassOpen(false)}
+   248→          onSaved={() => { setLiveClassOpen(false); refetch() }}
+   249→        />
+   250→      )}
+   251→    </div>
+   252→  )
+   253→}
+   254→
+   255→function LiveClassEditor({ course, onClose, onSaved }: { course: any; onClose: () => void; onSaved: () => void }) {
+   256→  const [form, setForm] = useState({
+   257→    liveClassUrl: course.liveClassUrl || '',
+   258→    liveClassTitle: course.liveClassTitle || '',
+   259→    liveClassScheduledAt: course.liveClassScheduledAt ? new Date(course.liveClassScheduledAt).toISOString().slice(0, 16) : '',
+   260→  })
+   261→  const [saving, setSaving] = useState(false)
+   262→
+   263→  const save = async () => {
+   264→    setSaving(true)
+   265→    try {
+   266→      await apiPatch(`/api/courses/${course.id}`, {
+   267→        liveClassUrl: form.liveClassUrl || null,
+   268→        liveClassTitle: form.liveClassTitle || null,
+   269→        liveClassScheduledAt: form.liveClassScheduledAt ? new Date(form.liveClassScheduledAt).toISOString() : null,
+   270→      })
+   271→      toast.success('Live class updated')
+   272→      onSaved()
+   273→    } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
+   274→  }
+   275→
+   276→  const clear = async () => {
+   277→    setSaving(true)
+   278→    try {
+   279→      await apiPatch(`/api/courses/${course.id}`, {
+   280→        liveClassUrl: null,
+   281→        liveClassTitle: null,
+   282→        liveClassScheduledAt: null,
+   283→      })
+   284→      toast.success('Live class removed')
+   285→      onSaved()
+   286→    } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
+   287→  }
+   288→
+   289→  return (
+   290→    <Dialog open onOpenChange={onClose}>
+   291→      <DialogContent>
+   292→        <DialogHeader>
+   293→          <DialogTitle>Set Live Class Link</DialogTitle>
+   294→          <DialogDescription>Paste a Zoom, Google Meet, or Microsoft Teams link. Students will see a "Join Live Class" button when a link is set.</DialogDescription>
+   295→        </DialogHeader>
+   296→        <div className="space-y-3">
+   297→          <div className="space-y-1.5">
+   298→            <Label>Live Class Title</Label>
+   299→            <Input value={form.liveClassTitle} onChange={(e) => setForm({ ...form, liveClassTitle: e.target.value })} placeholder="e.g. Week 5 Live Lecture: Elasticity" />
+   300→          </div>
+   301→          <div className="space-y-1.5">
+   302→            <Label>Meeting URL</Label>
+   303→            <Input value={form.liveClassUrl} onChange={(e) => setForm({ ...form, liveClassUrl: e.target.value })} placeholder="https://meet.google.com/xxx-xxxx-xxx or https://zoom.us/j/..." />
+   304→          </div>
+   305→          <div className="space-y-1.5">
+   306→            <Label>Scheduled Time (optional)</Label>
+   307→            <Input type="datetime-local" value={form.liveClassScheduledAt} onChange={(e) => setForm({ ...form, liveClassScheduledAt: e.target.value })} />
+   308→          </div>
+   309→        </div>
+   310→        <DialogFooter className="flex-col sm:flex-row gap-2">
+   311→          {course.liveClassUrl && (
+   312→            <Button variant="ghost" onClick={clear} disabled={saving} className="text-destructive sm:mr-auto">
+   313→              Remove Live Class
+   314→            </Button>
+   315→          )}
+   316→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+   317→          <Button onClick={save} disabled={saving} className="bg-primary hover:bg-primary/90">
+   318→            {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+   319→            Save
+   320→          </Button>
+   321→        </DialogFooter>
+   322→      </DialogContent>
+   323→    </Dialog>
+   324→  )
+   325→}
+   326→
+   327→function FileUploader({ lessonId, onDone }: { lessonId: string; onDone: () => void }) {
+   328→  const [uploading, setUploading] = useState(false)
+   329→  const inputRef = useRef<HTMLInputElement>(null)
+   330→
+   331→  const upload = async (file: File) => {
+   332→    if (file.size > 4 * 1024 * 1024) {
+   333→      toast.error('File too large. Maximum 4MB.')
+   334→      return
+   335→    }
+   336→    setUploading(true)
+   337→    try {
+   338→      const fd = new FormData()
+   339→      fd.append('file', file)
+   340→      const res = await fetch(`/api/admin/lessons/${lessonId}/files`, { method: 'POST', body: fd })
+   341→      const text = await res.text()
+   342→      if (!text) throw new Error('Upload failed. File may be too large (max 4MB).')
+   343→      let json
+   344→      try { json = JSON.parse(text) } catch { throw new Error('Server error during upload.') }
+   345→      if (!res.ok) throw new Error(json.error || 'Upload failed')
+   346→      toast.success(`Uploaded: ${file.name}`)
+   347→      onDone()
+   348→    } catch (e: any) {
+   349→      toast.error(e.message)
+   350→    } finally {
+   351→      setUploading(false)
+   352→      if (inputRef.current) inputRef.current.value = ''
+   353→    }
+   354→  }
+   355→
+   356→  return (
+   357→    <>
+   358→      <input
+   359→        ref={inputRef}
+   360→        type="file"
+   361→        className="hidden"
+   362→        accept="image/*,application/pdf,video/*,audio/*,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+   363→        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f) }}
+   364→      />
+   365→      <Button size="sm" variant="outline" disabled={uploading} onClick={() => inputRef.current?.click()}>
+   366→        {uploading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Upload className="h-3 w-3 mr-1" />}
+   367→        Upload File
+   368→      </Button>
+   369→    </>
+   370→  )
+   371→}
+   372→
+   373→function LessonEditor({ moduleId, lesson, courseId, onClose, onSaved }: any) {
+   374→  const [form, setForm] = useState({
+   375→    title: lesson?.title || '',
+   376→    description: lesson?.description || '',
+   377→    content: lesson?.content || '',
+   378→    videoUrl: lesson?.videoUrl || '',
+   379→    duration: String(lesson?.duration || 0),
+   380→    isPreview: lesson?.isPreview || false,
+   381→  })
+   382→  const [saving, setSaving] = useState(false)
+   383→
+   384→  const save = async () => {
+   385→    setSaving(true)
+   386→    try {
+   387→      if (lesson) {
+   388→        await apiPatch(`/api/admin/lessons/${lesson.id}`, { ...form, duration: Number(form.duration) })
+   389→      } else {
+   390→        await apiPost('/api/admin/lessons', { ...form, moduleId, duration: Number(form.duration) })
+   391→      }
+   392→      toast.success(lesson ? 'Lesson updated' : 'Lesson created')
+   393→      onSaved()
+   394→    } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
+   395→  }
+   396→
+   397→  return (
+   398→    <Dialog open onOpenChange={onClose}>
+   399→      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   400→        <DialogHeader>
+   401→          <DialogTitle>{lesson ? 'Edit Lesson' : 'Add Lesson'}</DialogTitle>
+   402→        </DialogHeader>
+   403→        <div className="space-y-3">
+   404→          <div className="space-y-1.5">
+   405→            <Label>Lesson Title</Label>
+   406→            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+   407→          </div>
+   408→          <div className="space-y-1.5">
+   409→            <Label>Description</Label>
+   410→            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
+   411→          </div>
+   412→          <div className="space-y-1.5">
+   413→            <Label>Content (text/notes)</Label>
+   414→            <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={4} />
+   415→          </div>
+   416→          <div className="grid grid-cols-2 gap-3">
+   417→            <div className="space-y-1.5">
+   418→              <Label>Video URL (YouTube, MP4, or any video link)</Label>
+   419→              <Input value={form.videoUrl} onChange={(e) => setForm({ ...form, videoUrl: e.target.value })} placeholder="https://www.youtube.com/embed/..." />
+   420→              <p className="text-[11px] text-muted-foreground">Paste a YouTube embed URL (https://www.youtube.com/embed/VIDEO_ID), a direct MP4 link, or any video URL.</p>
+   421→            </div>
+   422→            <div className="space-y-1.5">
+   423→              <Label>Duration (minutes)</Label>
+   424→              <Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+   425→            </div>
+   426→          </div>
+   427→          <label className="flex items-center gap-2 text-sm cursor-pointer">
+   428→            <input type="checkbox" checked={form.isPreview} onChange={(e) => setForm({ ...form, isPreview: e.target.checked })} className="rounded" />
+   429→            <span>Mark as preview (anyone can watch without enrolling)</span>
+   430→          </label>
+   431→        </div>
+   432→        <DialogFooter>
+   433→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+   434→          <Button onClick={save} disabled={saving || !form.title} className="bg-primary hover:bg-primary/90">
+   435→            {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+   436→            {lesson ? 'Save Changes' : 'Create Lesson'}
+   437→          </Button>
+   438→        </DialogFooter>
+   439→      </DialogContent>
+   440→    </Dialog>
+   441→  )
+   442→}
+   443→
+   444→function QuizEditor({ lessonId, courseId, onClose, onSaved }: { lessonId: string; courseId: string; onClose: () => void; onSaved: () => void }) {
+   445→  const [title, setTitle] = useState('')
+   446→  const [passMark, setPassMark] = useState('50')
+   447→  const [questions, setQuestions] = useState<Array<{ text: string; options: string[]; answer: number; imageUrl: string }>>([
+   448→    { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }
+   449→  ])
+   450→  const [saving, setSaving] = useState(false)
+   451→  const [loading, setLoading] = useState(true)
+   452→  const [existingQuizId, setExistingQuizId] = useState<string | null>(null)
+   453→
+   454→  // Fetch existing quiz for this lesson
+   455→  useEffect(() => {
+   456→    fetch(`/api/admin/quizzes?lessonId=${lessonId}`, { cache: 'no-store' })
+   457→      .then(r => r.json())
+   458→      .then(data => {
+   459→        if (data.quiz) {
+   460→          setExistingQuizId(data.quiz.id)
+   461→          setTitle(data.quiz.title || '')
+   462→          setPassMark(String(data.quiz.passMark || 50))
+   463→          if (data.quiz.questions && data.quiz.questions.length > 0) {
+   464→            setQuestions(data.quiz.questions.map((q: any) => ({
+   465→              text: q.text,
+   466→              options: q.options,
+   467→              answer: Number(q.answer),
+   468→              imageUrl: q.imageUrl || '',
+   469→            })))
+   470→          }
+   471→        }
+   472→      })
+   473→      .catch(() => {})
+   474→      .finally(() => setLoading(false))
+   475→  }, [lessonId])
+   476→
+   477→  const updateQ = (i: number, field: 'text' | 'options' | 'answer' | 'imageUrl', val: any) => {
+   478→    setQuestions(prev => prev.map((q, idx) => {
+   479→      if (idx !== i) return q
+   480→      if (field === 'options') {
+   481→        const opts = [...q.options]
+   482→        opts[val.idx] = val.value
+   483→        return { ...q, options: opts }
+   484→      }
+   485→      return { ...q, [field]: val }
+   486→    }))
+   487→  }
+   488→
+   489→  const addQ = () => setQuestions([...questions, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }])
+   490→  const insertQ = (i: number) => {
+   491→    const next = [...questions]
+   492→    next.splice(i + 1, 0, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' })
+   493→    setQuestions(next)
+   494→  }
+   495→  const removeQ = (i: number) => setQuestions(questions.filter((_, idx) => idx !== i))
+   496→
+   497→  const save = async () => {
+   498→    if (!title || questions.some(q => !q.text || q.options.some(o => !o))) {
+   499→      toast.error('Please fill all questions and options')
+   500→      return
+   501→    }
+   502→    setSaving(true)
+   503→    try {
+   504→      await apiPost('/api/admin/quizzes', {
+   505→        lessonId,
+   506→        title,
+   507→        passMark: Number(passMark),
+   508→        questions: questions.map(q => ({
+   509→          text: q.text,
+   510→          options: q.options,
+   511→          answer: q.answer,
+   512→          imageUrl: q.imageUrl || null,
+   513→        }))
+   514→      })
+   515→      toast.success(existingQuizId ? 'Quiz updated' : 'Quiz created')
+   516→      onSaved()
+   517→    } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
+   518→  }
+   519→
+   520→  return (
+   521→    <Dialog open onOpenChange={onClose}>
+   522→      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+   523→        <DialogHeader>
+   524→          <DialogTitle>{loading ? 'Loading...' : existingQuizId ? 'Edit Quiz' : 'Create Quiz'}</DialogTitle>
+   525→          <DialogDescription>Add multiple-choice questions. The first correct option per question is the answer.</DialogDescription>
+   526→        </DialogHeader>
+   527→        <div className="space-y-4">
+   528→          {loading ? (
+   529→            <div className="flex items-center justify-center py-12">
+   530→              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+   531→              <span className="ml-2 text-sm text-muted-foreground">Loading quiz...</span>
+   532→            </div>
+   533→          ) : (
+   534→            <>
+   535→          <div className="grid grid-cols-2 gap-3">
+   536→            <div className="space-y-1.5">
+   537→              <Label>Quiz Title</Label>
+   538→              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson Quiz" />
+   539→            </div>
+   540→            <div className="space-y-1.5">
+   541→              <Label>Pass Mark (%)</Label>
+   542→              <Input type="number" value={passMark} onChange={(e) => setPassMark(e.target.value)} />
+   543→            </div>
+   544→          </div>
+   545→
+   546→          {questions.map((q, i) => (
+   547→            <div key={i} className="border rounded-lg p-3 space-y-2">
+   548→              <div className="flex items-center justify-between">
+   549→                <Label className="text-xs">Question {i + 1}</Label>
+   550→                {questions.length > 1 && <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeQ(i)}><X className="h-3 w-3" /></Button>}
+   551→              </div>
+   552→              <Input value={q.text} onChange={(e) => updateQ(i, 'text', e.target.value)} placeholder="Question text" />
+   553→              <ImageUpload
+   554→                value={q.imageUrl || null}
+   555→                onChange={(url) => updateQ(i, 'imageUrl', url ?? '')}
+   556→                label="Question Image (optional)"
+   557→              />
+   558→              <div className="space-y-1">
+   559→                {q.options.map((opt, oi) => (
+   560→                  <div key={oi} className="flex items-center gap-2">
+   561→                    <input type="radio" name={`answer-${i}`} checked={q.answer === oi} onChange={() => updateQ(i, 'answer', oi)} className="h-3 w-3" />
+   562→                    <Input value={opt} onChange={(e) => updateQ(i, 'options', { idx: oi, value: e.target.value })} placeholder={`Option ${oi + 1}`} className="text-xs h-8" />
+   563→                  </div>
+   564→                ))}
+   565→              </div>
+   566→              <p className="text-[10px] text-muted-foreground">Select the radio button next to the correct answer.</p>
+   567→              <Button
+   568→                variant="outline"
+   569→                size="sm"
+   570→                className="w-full text-xs"
+   571→                onClick={() => insertQ(i)}
+   572→              >
+   573→                <Plus className="h-3 w-3 mr-1" /> Add Question Below
+   574→              </Button>
+   575→            </div>
+   576→          ))}
+   577→
+   578→          <Button variant="outline" size="sm" onClick={addQ} className="w-full"><Plus className="h-3 w-3 mr-1" /> Add Question</Button>
+   579→            </>
+   580→          )}
+   581→        </div>
+   582→        <DialogFooter>
+   583→          {existingQuizId && (
+   584→            <Button variant="ghost" onClick={async () => {
+   585→              if (!confirm('Delete this quiz? All student attempts will be kept but the quiz will no longer be available.')) return
+   586→              try {
+   587→                await apiDelete(`/api/admin/quizzes/${existingQuizId}`)
+   588→                toast.success('Quiz deleted')
+   589→                onSaved()
+   590→              } catch (e: any) { toast.error(e.message) }
+   591→            }} className="text-destructive mr-auto">
+   592→              <Trash2 className="h-4 w-4 mr-1" /> Delete Quiz
+   593→            </Button>
+   594→          )}
+   595→          <Button variant="outline" onClick={onClose}>Cancel</Button>
+   596→          <Button onClick={save} disabled={saving || loading} className="bg-primary hover:bg-primary/90">
+   597→            {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving...</> : (existingQuizId ? 'Update Quiz' : 'Create Quiz')}
+   598→          </Button>
+   599→        </DialogFooter>
+   600→      </DialogContent>
+   601→    </Dialog>
+   602→  )
+   603→}
+   604→

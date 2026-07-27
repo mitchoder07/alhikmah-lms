@@ -99,7 +99,7 @@ export default function BlogDetailPage() {
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-40">
         <div className="px-4 h-14 flex items-center justify-between max-w-3xl mx-auto">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[8px] flex-shrink-0">ABA</div>
+            <img src="/icon-192.png?v=2" alt="Logo" className="h-8 w-8 rounded-full flex-shrink-0" />
             <span className="font-bold text-primary text-xs sm:text-sm truncate">Al-Bashir Academy</span>
           </button>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="text-xs h-8">

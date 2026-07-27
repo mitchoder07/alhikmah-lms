@@ -120,7 +120,7 @@ export function CertificatePreview({
 
         <div class="header">
           <div class="header-top">
-            <div class="logo">ABA</div>
+            <img src="/icon-192.png?v=2" alt="Logo" class="logo-img" style="width:56px;height:56px;border-radius:50%;" />
             <div style="text-align: left;">
               <div class="uni-name">AL-BASHIR ACADEMY</div>
               <div class="uni-sub">Ilorin, Kwara State, Nigeria</div>
@@ -215,7 +215,7 @@ export function CertificatePreview({
 
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0" style={{ background: 'linear-gradient(135deg, #006633, #003d1f)' }}>ABA</div>
+                <img src="/icon-192.png?v=2" alt="Logo" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex-shrink-0" />
                 <div className="text-left">
                   <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-BASHIR ACADEMY</p>
                   <p className="text-[10px] text-gray-600">Ilorin, Kwara State, Nigeria</p>
