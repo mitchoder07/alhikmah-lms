@@ -266,7 +266,12 @@ export function AdminTranscript() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {transcript.enrollments.map((row) => (
+                      {[...transcript.enrollments].sort((a, b) => {
+                        const levelA = parseInt(a.level) || 0
+                        const levelB = parseInt(b.level) || 0
+                        if (levelB !== levelA) return levelB - levelA
+                        return a.courseCode.localeCompare(b.courseCode)
+                      }).map((row) => (
                         <tr key={row.id} className="hover:bg-secondary/20">
                           <td className="p-3 font-mono font-medium">{row.courseCode}</td>
                           <td className="p-3">
@@ -400,7 +405,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 // Build a clean printable HTML document for the transcript (mirrors the certificate download approach)
 function buildPrintHtml(t: Transcript): string {
   const student = t.student
-  const rows = t.enrollments.map((r) => {
+  // Sort enrollments by level descending (400 level first, then 300, 200, 100)
+  const sortedEnrollments = [...t.enrollments].sort((a, b) => {
+    const levelA = parseInt(a.level) || 0
+    const levelB = parseInt(b.level) || 0
+    if (levelB !== levelA) return levelB - levelA
+    return a.courseCode.localeCompare(b.courseCode)
+  })
+  const rows = sortedEnrollments.map((r) => {
     const scoreCell = r.finalScore !== null ? `${r.finalScore}%` : '—'
     const quizCell = r.quizAverage !== null ? `${r.quizAverage}%` : '—'
     const examCell = r.finalExamScore !== null ? `${r.finalExamScore}%` : '—'
@@ -434,7 +446,7 @@ function buildPrintHtml(t: Transcript): string {
   .toolbar button { background: #D4AF37; color: black; border: none; padding: 8px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; }
   .header { text-align: center; margin-bottom: 20px; }
   .header-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
-  .logo { width: 56px; height: 56px; border-radius: 50%; background: #006633; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+  .logo { width: 56px; height: 56px; border-radius: 50%; background: #006633; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .uni-name { font-weight: bold; color: #006633; font-size: 17px; }
   .uni-sub { font-size: 10px; color: #666; }
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #D4AF37, transparent); margin: 8px 0; }
@@ -470,6 +482,7 @@ function buildPrintHtml(t: Transcript): string {
     .toolbar { display: none; }
     body { background: white; padding: 0; }
     .wrap { border-width: 4px; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
 </style>
 </head>
