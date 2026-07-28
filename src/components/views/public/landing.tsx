@@ -26,7 +26,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
         <div className="px-4 h-14 flex items-center justify-between gap-2 max-w-7xl mx-auto">
           <button onClick={() => router.push('/')} className="flex items-center gap-2 min-w-0">
-            <img src="/logo-full.png?v=2" alt="Al-Bashir Academy" className="h-10 sm:h-12 w-auto flex-shrink-0" />
+            <img src="/logo-full.png?v=3" alt="Al-Bashir Academy" className="h-10 sm:h-12 w-auto flex-shrink-0" />
           </button>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => router.push('/login')} className="text-xs h-8 px-2.5 sm:px-3">Sign in</Button>
@@ -222,7 +222,7 @@ export function LandingPage() {
         <div className="px-4 py-8 max-w-7xl mx-auto grid sm:grid-cols-3 gap-6 text-sm">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <img src="/icon-192.png?v=2" alt="Logo" className="h-8 w-8 rounded-full" />
+              <img src="/icon-192.png?v=3" alt="Logo" className="h-8 w-8 rounded-full" />
               <p className="font-semibold">Al-Bashir Academy LMS</p>
             </div>
             <p className="text-muted-foreground text-xs sm:text-sm">Department of Economics, Ilorin, Kwara State, Nigeria.</p>
