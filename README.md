@@ -1,4 +1,4 @@
-# Al-Hikmah LMS — Department of Economics
+# Al-Bashir Academy LMS — Economics
 
 A modern Learning Management System for the Department of Economics, Al-Hikmah University, Ilorin. Built with Next.js 16, TypeScript, Tailwind CSS, Prisma, and PostgreSQL (Neon).
 
