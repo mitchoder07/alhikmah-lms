@@ -84,7 +84,7 @@ export function AppShell({
     <div className="flex h-full flex-col">
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">
-          <img src="/icon-192.png?v=2" alt="Logo" className="h-10 w-10 rounded-full flex-shrink-0" />
+          <img src="/icon-192.png?v=3" alt="Logo" className="h-10 w-10 rounded-full flex-shrink-0" />
           <div className="min-w-0">
             <p className="font-bold text-sm leading-none text-primary truncate">{brand.title}</p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">{brand.subtitle}</p>
