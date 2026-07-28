@@ -1,7 +1,7 @@
 {
-  "name": "Al-Bashir Academy Academy LMS — Department of Economics",
-  "short_name": "Al-Bashir Academy Academy LMS",
-  "description": "Learning Management System for the Department of Economics, Al-Bashir Academy Academy.",
+  "name": "Al-Bashir Academy LMS — Department of Economics",
+  "short_name": "Al-Bashir Academy LMS",
+  "description": "Learning Management System for the Department of Economics, Al-Bashir Academy.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
