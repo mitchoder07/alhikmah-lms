@@ -215,7 +215,7 @@ export function CertificatePreview({
 
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <img src="/icon-192.png?v=2" alt="Logo" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex-shrink-0" />
+                <img src="/icon-192.png?v=3" alt="Logo" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex-shrink-0" />
                 <div className="text-left">
                   <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-BASHIR ACADEMY</p>
                   <p className="text-[10px] text-gray-600">Ilorin, Kwara State, Nigeria</p>
