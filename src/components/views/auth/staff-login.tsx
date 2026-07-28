@@ -57,7 +57,7 @@ export function StaffLoginPage() {
           {/* Logo — white card behind it so green logo is readable on green bg */}
           <div className="flex flex-col items-center mb-8">
             <div className="bg-white rounded-2xl p-3 shadow-xl mb-4">
-              <img src="/logo-full.png?v=2" alt="Al-Bashir Academy" className="h-24 sm:h-28 w-auto" />
+              <img src="/logo-full.png?v=3" alt="Al-Bashir Academy" className="h-24 sm:h-28 w-auto" />
             </div>
             <h1 className="text-xl font-bold text-white">Staff Portal</h1>
             <p className="text-xs text-white/60 mt-1">For lecturers and administrators only</p>
