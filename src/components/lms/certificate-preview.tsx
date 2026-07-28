@@ -120,7 +120,7 @@ export function CertificatePreview({
 
         <div class="header">
           <div class="header-top">
-            <img src="/icon-192.png?v=2" alt="Logo" class="logo-img" style="width:56px;height:56px;border-radius:50%;" />
+            <img src="/icon-192.png?v=3" alt="Logo" class="logo-img" style="width:56px;height:56px;border-radius:50%;" />
             <div style="text-align: left;">
               <div class="uni-name">AL-BASHIR ACADEMY</div>
               <div class="uni-sub">Ilorin, Kwara State, Nigeria</div>
