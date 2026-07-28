@@ -1,0 +1,40 @@
+{
+  "name": "Al-Bashir Academy LMS — Department of Economics",
+  "short_name": "Al-Bashir Academy LMS",
+  "description": "Learning Management System for the Department of Economics, Al-Bashir Academy.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#006633",
+  "scope": "/",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Courses",
+      "short_name": "Courses",
+      "url": "/",
+      "description": "View your enrolled courses"
+    },
+    {
+      "name": "AI Study Buddy",
+      "short_name": "Tutor",
+      "url": "/",
+      "description": "Ask the AI tutor a question"
+    }
+  ]
+}
