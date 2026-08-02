@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Search, Users, Trash2, Plus, Upload, Mail, Loader2, X } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Search, Users, Trash2, Plus, Upload, Mail, Loader2, X, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 
 interface Student {
@@ -23,6 +23,7 @@ export function AdminStudents() {
   const [q, setQ] = useState('')
   const [importOpen, setImportOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [resetTarget, setResetTarget] = useState<Student | null>(null)
   const students = (data?.students ?? []).filter(s =>
     !q || s.name.toLowerCase().includes(q.toLowerCase()) || s.email.toLowerCase().includes(q.toLowerCase()) || (s.matricNumber || '').toLowerCase().includes(q.toLowerCase())
   )
@@ -89,9 +90,21 @@ export function AdminStudents() {
                       {s._count.certificates > 0 && <Badge variant="secondary" className="text-[10px] bg-gold/20 text-gold">{s._count.certificates} cert(s)</Badge>}
                     </div>
                   </div>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(s.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-primary"
+                      title="Reset password"
+                      aria-label={`Reset password for ${s.name}`}
+                      onClick={() => setResetTarget(s)}
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(s.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -100,6 +113,7 @@ export function AdminStudents() {
       </Card>
 
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); refetch() }} />
+      <ResetPasswordDialog student={resetTarget} onClose={() => setResetTarget(null)} />
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
@@ -166,6 +180,104 @@ function ImportDialog({ open, onClose, onDone }: { open: boolean; onClose: () =>
           <Button onClick={submit} disabled={importing} className="bg-primary hover:bg-primary/90">
             {importing && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
             Import Students
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
+interface ResetPasswordDialogProps {
+  student: Student | null
+  onClose: () => void
+}
+
+function ResetPasswordDialog({ student, onClose }: ResetPasswordDialogProps) {
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Reset the input whenever a new student is opened
+  // (or when the dialog is closed)
+  useEffect(() => {
+    if (student) {
+      setPassword('')
+      setShowPassword(false)
+    }
+  }, [student])
+
+  const submit = async () => {
+    if (!student) return
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters.')
+      return
+    }
+    setSaving(true)
+    try {
+      await apiPost(`/api/admin/students/${student.id}/reset-password`, { password })
+      toast.success(`Password reset for ${student.name}.`)
+      onClose()
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to reset password')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={!!student} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reset Student Password</DialogTitle>
+          <DialogDescription>
+            {student && (
+              <>
+                Set a new password for <strong>{student.name}</strong> ({student.email}).
+                The student will use this password to sign in. Please share it with them securely
+                and recommend they change it after their next login.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="reset-password-input">New Password</Label>
+          <div className="relative">
+            <Input
+              id="reset-password-input"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              className="pr-10"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && password.length >= 6 && !saving) submit()
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Tip: use a temporary password like <span className="font-mono">student123</span> and
+            ask the student to change it from their profile after signing in.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={submit}
+            disabled={saving || password.length < 6}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+            Reset Password
           </Button>
         </DialogFooter>
       </DialogContent>

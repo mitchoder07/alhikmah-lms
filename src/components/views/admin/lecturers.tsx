@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Plus, Trash2, Pencil, Loader2, Users, Mail, BookOpen, X, Shield } from 'lucide-react'
+import { Plus, Trash2, Pencil, Loader2, Users, Mail, BookOpen, X, Shield, KeyRound, Eye, EyeOff } from "lucide-react"
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -23,6 +23,10 @@ export function AdminLecturers() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editLecturer, setEditLecturer] = useState<Lecturer | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [resetLecturer, setResetLecturer] = useState<Lecturer | null>(null)
+  const [newPassword, setNewPassword] = useState("")
+  const [showPwd, setShowPwd] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', department: 'Economics' })
   const [editForm, setEditForm] = useState({ name: '', email: '', department: 'Economics', password: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -150,6 +154,9 @@ export function AdminLecturers() {
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(l)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setResetLecturer(l); setNewPassword(""); setShowPwd(false) }} title="Reset Password">
+                      <KeyRound className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(l.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -249,6 +256,55 @@ export function AdminLecturers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetLecturer} onOpenChange={(o) => !o && setResetLecturer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Lecturer Password</DialogTitle>
+            <DialogDescription>Set a new password for <strong>{resetLecturer?.name}</strong>. They will need to use this new password to sign in.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>New Password</Label>
+            <div className="relative">
+              <Input
+                type={showPwd ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                className="h-11 pr-10"
+              />
+              <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetLecturer(null)}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (!resetLecturer || newPassword.length < 6) return
+                setResetting(true)
+                try {
+                  await apiPost(`/api/admin/lecturers/${resetLecturer.id}/reset-password`, { password: newPassword })
+                  toast.success('Password reset successfully')
+                  setResetLecturer(null)
+                  setNewPassword('')
+                } catch (e: any) {
+                  toast.error(e.message)
+                } finally {
+                  setResetting(false)
+                }
+              }}
+              disabled={!newPassword || newPassword.length < 6 || resetting}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reset Password'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
