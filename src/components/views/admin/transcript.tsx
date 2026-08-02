@@ -204,33 +204,36 @@ export function AdminTranscript() {
           {/* Student header */}
           <Card className="border-primary/20">
             <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start gap-4 flex-wrap">
-                <Avatar className="h-14 w-14 flex-shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-base font-medium">
-                    {transcript.student.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold">{transcript.student.name}</h3>
-                  <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground mt-1">
+              {/* Top row: avatar + name + print button */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar className="h-12 w-12 sm:h-14 sm:w-14 flex-shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm sm:text-base font-medium">
+                      {transcript.student.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-bold truncate">{transcript.student.name}</h3>
                     {transcript.student.matricNumber && (
-                      <span className="font-mono">{transcript.student.matricNumber}</span>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">{transcript.student.matricNumber}</p>
                     )}
-                    <span>·</span>
-                    <span>{transcript.student.email}</span>
-                    <span>·</span>
-                    <span>{transcript.student.department}</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                    <Stat label="Courses" value={String(transcript.totals.coursesEnrolled)} />
-                    <Stat label="Completed" value={String(transcript.totals.coursesCompleted)} />
-                    <Stat label="Certificates" value={String(transcript.totals.certificatesIssued)} />
-                    <Stat label="Credit Units" value={String(transcript.totals.totalCreditUnits)} />
                   </div>
                 </div>
-                <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90">
-                  <Printer className="h-4 w-4 mr-1" /> Print Transcript
+                <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 flex-shrink-0" size="sm">
+                  <Printer className="h-3.5 w-3.5 mr-1" /> Print
                 </Button>
+              </div>
+              {/* Info row */}
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-3">
+                <span>{transcript.student.email}</span>
+                <span>{transcript.student.department}</span>
+              </div>
+              {/* Stats grid */}
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
+                <Stat label="Courses" value={String(transcript.totals.coursesEnrolled)} />
+                <Stat label="Completed" value={String(transcript.totals.coursesCompleted)} />
+                <Stat label="Certificates" value={String(transcript.totals.certificatesIssued)} />
+                <Stat label="Credit Units" value={String(transcript.totals.totalCreditUnits)} />
               </div>
             </CardContent>
           </Card>
@@ -447,9 +450,9 @@ export function AdminTranscript() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-secondary/40 px-4 py-3 text-center">
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+    <div className="rounded-lg bg-secondary/40 px-2 py-2 sm:px-4 sm:py-3 text-center">
+      <p className="text-base sm:text-lg font-bold text-foreground">{value}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{label}</p>
     </div>
   )
 }
@@ -527,8 +530,8 @@ function buildPrintHtml(t: Transcript): string {
   .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
   .sign-block { text-align: center; }
   .sign-line { border-top: 1px solid #666; padding-top: 4px; }
-  .sign-name { font-size: 12px; font-weight: 600; }
-  .sign-role { font-size: 10px; color: #999; }
+  .sign-name { font-size: 12px; font-weight: 600; color: #333; }
+  .sign-role { font-size: 11px; color: #555; font-weight: 600; }
   @page { size: A4 portrait; margin: 0.5in; }
   @media print {
     .toolbar { display: none; }
@@ -604,13 +607,13 @@ function buildPrintHtml(t: Transcript): string {
         <div class="sign-block">
           <div class="sign-line">
             <div class="sign-name">Chief Examiner</div>
-            <div class="sign-role">Chief Examiner, Dept. of Economics</div>
+            <div class="sign-role">Dept. of Economics</div>
           </div>
         </div>
         <div class="sign-block">
           <div class="sign-line">
-            <div class="sign-name">&nbsp;</div>
-            <div class="sign-role">Director, Al-Bashir Academy</div>
+            <div class="sign-name">Director</div>
+            <div class="sign-role">Al-Bashir Academy</div>
           </div>
         </div>
       </div>
