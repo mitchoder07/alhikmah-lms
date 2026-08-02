@@ -286,7 +286,7 @@ export function AdminLecturers() {
                 if (!resetLecturer || newPassword.length < 6) return
                 setResetting(true)
                 try {
-                  await apiPost(`/api/admin/lecturers/${resetLecturer.id}/reset-password`, { password: newPassword })
+                  await apiPost(`/api/admin/lecturers/${resetLecturer.id}/lecturer-reset-password-route`, { password: newPassword })
                   toast.success('Password reset successfully')
                   setResetLecturer(null)
                   setNewPassword('')

@@ -251,8 +251,9 @@ export function AdminTranscript() {
                 </div>
               ) : (
                 <>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[800px]">
+                {/* Desktop table — hidden on mobile */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm">
                     <thead className="bg-secondary/50 border-b text-xs">
                       <tr>
                         <th className="text-left p-3 font-medium">Course Code</th>
@@ -321,7 +322,55 @@ export function AdminTranscript() {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-muted-foreground text-center sm:hidden mt-2">← Swipe to see more →</p>
+
+                {/* Mobile cards — shown only on mobile */}
+                <div className="sm:hidden space-y-3 p-3">
+                  {[...transcript.enrollments].sort((a, b) => {
+                    const levelA = parseInt(a.level) || 0
+                    const levelB = parseInt(b.level) || 0
+                    if (levelB !== levelA) return levelB - levelA
+                    return a.courseCode.localeCompare(b.courseCode)
+                  }).map((row) => (
+                    <div key={row.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-mono font-medium text-sm">{row.courseCode}</p>
+                          <p className="text-xs text-muted-foreground">{row.courseTitle}</p>
+                          <p className="text-[10px] text-muted-foreground">Level {row.level} · {row.semester} Semester</p>
+                        </div>
+                        <GradeBadge grade={row.grade} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Quiz</p>
+                          <p className="font-medium">{row.quizAverage !== null ? `${row.quizAverage}%` : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Exam</p>
+                          <p className="font-medium">{row.finalExamScore !== null ? `${row.finalExamScore}%` : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Final</p>
+                          <p className="font-bold text-primary">{row.finalScore !== null ? `${row.finalScore}%` : '—'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <div>
+                          {row.certificateStatus === 'Issued' ? (
+                            <Badge className="bg-gold/20 text-gold text-[10px]"><Award className="h-2.5 w-2.5 mr-0.5" />Issued</Badge>
+                          ) : row.certificateStatus === 'Eligible' ? (
+                            <Badge variant="secondary" className="text-[10px] text-amber-600">Eligible</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Pending</Badge>
+                          )}
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(row)}>
+                          <Pencil className="h-3 w-3 mr-1" /> Edit
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 </>
               )}
             </CardContent>

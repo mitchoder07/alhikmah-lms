@@ -215,7 +215,7 @@ function ResetPasswordDialog({ student, onClose }: ResetPasswordDialogProps) {
     }
     setSaving(true)
     try {
-      await apiPost(`/api/admin/students/${student.id}/reset-password`, { password })
+      await apiPost(`/api/admin/students/${student.id}/students-reset-password-route`, { password })
       toast.success(`Password reset for ${student.name}.`)
       onClose()
     } catch (e: any) {
