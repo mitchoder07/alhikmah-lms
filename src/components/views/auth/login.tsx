@@ -94,26 +94,30 @@ export function LoginPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-3 p-5 sm:p-6 pt-0">
+          <CardFooter className="flex flex-col gap-2 p-5 sm:p-6 pt-0">
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-11 text-base" disabled={loading}>
               {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Signing in...</> : 'Sign in'}
             </Button>
-            <div className="flex items-center justify-between text-xs">
+            <p className="text-xs text-center text-muted-foreground">
+              Forgot password?{' '}
               <button
                 type="button"
-                className="text-muted-foreground hover:text-primary hover:underline"
+                className="text-primary hover:underline font-medium"
                 onClick={() => { setForgotOpen(true); setForgotSubmitted(false); setForgotEmail(email) }}
               >
-                Forgot password?
+                Click here
               </button>
+            </p>
+            <p className="text-xs text-center text-muted-foreground">
+              New here?{' '}
               <button
                 type="button"
-                className="text-muted-foreground hover:text-primary hover:underline"
+                className="text-primary hover:underline font-medium"
                 onClick={() => router.push('/register')}
               >
                 Create an account
               </button>
-            </div>
+            </p>
           </CardFooter>
         </form>
       </Card>

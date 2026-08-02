@@ -107,7 +107,13 @@ export function StaffLoginPage() {
             </form>
           </div>
 
-          <p className="text-xs text-center text-white/50 mt-6">
+          <p className="text-xs text-center text-white/50 mt-4">
+            Forgot password?{' '}
+            <button type="button" className="text-[#D4AF37] hover:underline font-medium" onClick={() => toast.info('Please contact the administrator at admin@alhikmah.edu.ng to reset your password.', { duration: 8000 })}>
+              Click here
+            </button>
+          </p>
+          <p className="text-xs text-center text-white/50 mt-2">
             Not a staff member?{' '}
             <button type="button" className="text-[#D4AF37] hover:underline font-medium" onClick={() => router.push('/register')}>Create a student account</button>
           </p>
