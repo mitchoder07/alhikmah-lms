@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useApi, apiPost } from '@/lib/api'
 import { ShoppingCart, Trash2, Loader2, CreditCard, ShieldCheck, ArrowLeft, Tag, CheckCircle2, Lock } from 'lucide-react'
+import { PaystackLogo, FlutterwaveLogo } from '@/components/lms/payment-logos'
 import { toast } from 'sonner'
+
+type Provider = 'paystack' | 'flutterwave'
 
 const CART_STORAGE_KEY = 'albashir-course-cart'
 
@@ -85,6 +88,7 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
   const [calculating, setCalculating] = useState(false)
   const [paying, setPaying] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [provider, setProvider] = useState<Provider>('paystack')
 
   const allCourses = coursesData?.courses ?? []
   const cartCourses = allCourses.filter((c) => ids.includes(c.id) && c.isPaid)
@@ -122,10 +126,13 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
     if (cartCourses.length === 0) return
     setPaying(true)
     try {
-      // Initiate payment for each course sequentially (demo mode will auto-succeed)
+      // Initiate payment for each course sequentially using the selected provider.
+      // Demo mode (no secret key configured) will auto-succeed for each course.
+      // Real gateway mode will redirect to the first checkout URL — the remaining
+      // courses stay in the cart so the student can pay for them after returning.
       const references: Array<{ courseId: string; reference: string; demo: boolean; authorization_url?: string }> = []
       for (const course of cartCourses) {
-        const res = await apiPost(`/api/courses/${course.id}/access`, { provider: 'paystack' })
+        const res = await apiPost(`/api/courses/${course.id}/access`, { provider })
         references.push({
           courseId: course.id,
           reference: res.reference,
@@ -339,6 +346,27 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
                   </div>
                 </div>
 
+                {/* Provider selector — lets the student pick Paystack or Flutterwave */}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Payment Method</p>
+                  <label
+                    className={`flex items-center gap-2 p-2.5 rounded-md border-2 cursor-pointer transition-colors ${provider === 'paystack' ? 'border-primary bg-primary/5' : 'border-border hover:bg-secondary/50'}`}
+                  >
+                    <input type="radio" name="cart-provider" checked={provider === 'paystack'} onChange={() => setProvider('paystack')} className="h-3.5 w-3.5" />
+                    <div className="flex-shrink-0"><PaystackLogo height={20} /></div>
+                    <span className="text-xs text-muted-foreground">Cards · Bank · USSD</span>
+                    {provider === 'paystack' && <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />}
+                  </label>
+                  <label
+                    className={`flex items-center gap-2 p-2.5 rounded-md border-2 cursor-pointer transition-colors ${provider === 'flutterwave' ? 'border-primary bg-primary/5' : 'border-border hover:bg-secondary/50'}`}
+                  >
+                    <input type="radio" name="cart-provider" checked={provider === 'flutterwave'} onChange={() => setProvider('flutterwave')} className="h-3.5 w-3.5" />
+                    <div className="flex-shrink-0"><FlutterwaveLogo height={20} /></div>
+                    <span className="text-xs text-muted-foreground">Cards · Bank · Mobile money</span>
+                    {provider === 'flutterwave' && <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />}
+                  </label>
+                </div>
+
                 <Button
                   className="w-full bg-primary hover:bg-primary/90"
                   onClick={payForAll}
@@ -347,7 +375,7 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
                   {paying ? (
                     <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing payments…</>
                   ) : (
-                    <><CreditCard className="h-4 w-4 mr-2" /> Pay for All (₦{(discount?.finalAmount ?? 0).toLocaleString()})</>
+                    <><CreditCard className="h-4 w-4 mr-2" /> Pay ₦{(discount?.finalAmount ?? 0).toLocaleString()} with {provider === 'paystack' ? 'Paystack' : 'Flutterwave'}</>
                   )}
                 </Button>
 
@@ -364,7 +392,7 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
 
                 <div className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-muted-foreground">
                   <ShieldCheck className="h-3 w-3" />
-                  <span>Secured via Paystack · 256-bit SSL</span>
+                  <span>Secured via {provider === 'paystack' ? 'Paystack' : 'Flutterwave'} · 256-bit SSL</span>
                 </div>
               </CardContent>
             </Card>

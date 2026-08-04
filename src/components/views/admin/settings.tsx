@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSession } from '@/components/app-provider'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,17 +9,28 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from 'sonner'
-import { Lock, Eye, EyeOff, Loader2, Shield, Mail, Save, AlertTriangle } from 'lucide-react'
+import { Lock, Eye, EyeOff, Loader2, Shield, Mail, Save, AlertTriangle, PenTool, Upload, Trash2, Loader } from 'lucide-react'
 import { apiPost } from '@/lib/api'
 
 export function AdminSettings() {
-  const { user } = useSession()
+  const { user, refresh } = useSession()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Signature upload state
+  const sigInputRef = useRef<HTMLInputElement>(null)
+  const [sigUploading, setSigUploading] = useState(false)
+  const [sigRemoving, setSigRemoving] = useState(false)
+  const [sigPreview, setSigPreview] = useState<string | null>(null)
+
+  // Sync local signature preview with the session user's signatureUrl
+  useEffect(() => {
+    setSigPreview(user?.signatureUrl ?? null)
+  }, [user?.signatureUrl])
 
   // Password strength check
   const hasMinLength = newPassword.length >= 8
@@ -55,6 +66,129 @@ export function AdminSettings() {
     }
   }
 
+  /**
+   * Client-side background removal for scanned signatures.
+   * Loads the uploaded image into a canvas, reads every pixel, and makes
+   * near-white pixels (R > 230, G > 230, B > 230) fully transparent.
+   * The result is exported as a PNG (which preserves alpha) and uploaded.
+   *
+   * This is the "pen ink only" effect the user wants — no server-side
+   * image processing required, works identically on Vercel serverless.
+   */
+  const removeBackground = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const reader = new FileReader()
+      reader.onload = () => {
+        img.onload = () => {
+          try {
+            // Cap dimensions so we don't end up with a multi-MB PNG
+            const MAX_DIM = 600
+            let { width, height } = img
+            if (width > MAX_DIM || height > MAX_DIM) {
+              const ratio = Math.min(MAX_DIM / width, MAX_DIM / height)
+              width = Math.round(width * ratio)
+              height = Math.round(height * ratio)
+            }
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) {
+              reject(new Error('Canvas not supported'))
+              return
+            }
+            ctx.drawImage(img, 0, 0, width, height)
+            const imageData = ctx.getImageData(0, 0, width, height)
+            const data = imageData.data
+            const THRESHOLD = 230 // anything brighter than this becomes transparent
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i]
+              const g = data[i + 1]
+              const b = data[i + 2]
+              if (r > THRESHOLD && g > THRESHOLD && b > THRESHOLD) {
+                // Make near-white pixel fully transparent (pen ink stays opaque)
+                data[i + 3] = 0
+              }
+            }
+            ctx.putImageData(imageData, 0, 0)
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob)
+              else reject(new Error('Failed to export PNG'))
+            }, 'image/png')
+          } catch (err) {
+            reject(err)
+          }
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = reader.result as string
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleSignatureUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a PNG or JPEG image of your signature.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image is too large. Maximum 5MB. Please crop to just the signature area first.')
+      return
+    }
+    setSigUploading(true)
+    try {
+      // Step 1: remove white background client-side so only the pen ink remains
+      const processedBlob = await removeBackground(file)
+
+      // Step 2: re-check size after processing (PNG with alpha can be larger than the original JPG)
+      if (processedBlob.size > 2 * 1024 * 1024) {
+        toast.error('Processed signature is still too large. Please crop more tightly around just the signature.')
+        return
+      }
+
+      // Step 3: upload to the signature endpoint
+      const fd = new FormData()
+      fd.append('file', processedBlob, 'signature.png')
+      const res = await fetch('/api/auth/upload-signature', { method: 'POST', body: fd })
+      const text = await res.text()
+      if (!text) throw new Error('Upload failed. Try a smaller image.')
+      let json
+      try { json = JSON.parse(text) } catch { throw new Error('Server error during upload.') }
+      if (!res.ok) throw new Error(json.error || 'Upload failed')
+
+      setSigPreview(json.signatureUrl)
+      // Refresh the session so the new signatureUrl is available app-wide
+      await refresh()
+      toast.success('Signature uploaded — it will appear on all new certificates and transcripts.')
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to upload signature')
+    } finally {
+      setSigUploading(false)
+      if (sigInputRef.current) sigInputRef.current.value = ''
+    }
+  }
+
+  const handleSignatureRemove = async () => {
+    if (!confirm('Remove your signature? Certificates will fall back to showing just your printed name.')) return
+    setSigRemoving(true)
+    try {
+      const res = await fetch('/api/auth/upload-signature', { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to remove signature')
+      }
+      setSigPreview(null)
+      await refresh()
+      toast.success('Signature removed.')
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to remove signature')
+    } finally {
+      setSigRemoving(false)
+    }
+  }
+
   if (!user) return null
   const initials = user.name.split(' ').map(n => n[0]).slice(0, 2).join('')
 
@@ -62,7 +196,7 @@ export function AdminSettings() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Security Settings</h2>
-        <p className="text-sm text-muted-foreground mt-1">Manage your account security. Change your password regularly to keep the portal safe.</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage your account security and signature. Change your password regularly to keep the portal safe.</p>
       </div>
 
       {/* Account Info */}
@@ -102,6 +236,123 @@ export function AdminSettings() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Signature Upload */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <PenTool className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle className="text-base">Lecturer / Admin Signature</CardTitle>
+              <CardDescription className="text-xs">
+                Sign your name on a blank sheet of paper, take a clear photo or scan it,
+                and upload it here. We automatically remove the white background so only
+                the pen ink remains. Your signature will appear on every certificate and
+                transcript you issue.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <input
+            ref={sigInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleSignatureUpload(f)
+            }}
+          />
+
+          {sigPreview ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border-2 border-dashed border-primary/30 bg-secondary/30 p-6 flex items-center justify-center min-h-[140px]">
+                {/* Checkerboard background so transparent PNG is visible */}
+                <div
+                  className="flex items-center justify-center w-full"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)',
+                    backgroundSize: '16px 16px',
+                    backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0',
+                    minHeight: '100px',
+                  }}
+                >
+                  <img
+                    src={sigPreview}
+                    alt="Your signature"
+                    className="max-h-24 max-w-full object-contain"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={sigUploading}
+                  onClick={() => sigInputRef.current?.click()}
+                >
+                  {sigUploading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Replacing...</>
+                  ) : (
+                    <><Upload className="h-4 w-4 mr-2" /> Replace Signature</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/5"
+                  disabled={sigRemoving}
+                  onClick={handleSignatureRemove}
+                >
+                  {sigRemoving ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Removing...</>
+                  ) : (
+                    <><Trash2 className="h-4 w-4 mr-2" /> Remove</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-green-700 bg-green-50 rounded-md p-2">
+                ✓ Signature active — it will appear on the next certificate or transcript you issue.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => sigInputRef.current?.click()}
+                disabled={sigUploading}
+                className="w-full min-h-[140px] rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-secondary/50 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed p-6"
+              >
+                {sigUploading ? (
+                  <>
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="text-sm font-medium">Processing & uploading...</span>
+                    <span className="text-xs">Removing background, this takes a moment.</span>
+                  </>
+                ) : (
+                  <>
+                    <PenTool className="h-8 w-8" />
+                    <span className="text-sm font-medium">Upload your signature</span>
+                    <span className="text-xs text-center max-w-md">
+                      Sign on white paper, photograph or scan it, then click here. We&apos;ll remove the background automatically.
+                    </span>
+                  </>
+                )}
+              </button>
+              <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
+                <p className="text-xs font-medium text-amber-900 mb-1">Tips for a clean signature:</p>
+                <ul className="text-xs text-amber-800 space-y-0.5 list-disc list-inside">
+                  <li>Use a dark pen (black or blue) on plain white paper.</li>
+                  <li>Crop the image to just the signature area before uploading.</li>
+                  <li>Make sure the paper is well-lit and there are no shadows.</li>
+                  <li>Maximum 5MB upload; we resize to 600px on the longest side.</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -211,7 +462,7 @@ export function AdminSettings() {
               <ul className="text-xs text-amber-800 mt-2 space-y-1">
                 <li>Change your password every 30 days</li>
                 <li>Never share your password with anyone, including other staff</li>
-                <li>Use a unique password that you don't use on other websites</li>
+                <li>Use a unique password that you don&apos;t use on other websites</li>
                 <li>Always sign out after using the portal on a shared computer</li>
                 <li>Only the admin can revoke certificates and manage lecturers</li>
                 <li>The staff portal URL is private and should only be shared with authorized staff</li>

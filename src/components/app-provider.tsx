@@ -13,6 +13,8 @@ interface SessionUser {
   matricNumber?: string | null
   department?: string
   avatarUrl?: string | null
+  // Lecturer/admin scanned signature (base64 data URL) — rendered on certificates and transcripts.
+  signatureUrl?: string | null
 }
 
 interface SessionState {

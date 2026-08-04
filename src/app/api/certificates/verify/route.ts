@@ -4,6 +4,9 @@ import { db } from '@/lib/db'
 // Public verification — no auth required.
 // Certificate model has no direct `course` relation (only `enrollment` + `user`),
 // so we resolve course data through the enrollment relation.
+//
+// Returns the lecturer's name AND signatureUrl so the certificate preview can
+// render the actual scanned signature above the lecturer's printed name.
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -23,7 +26,7 @@ export async function GET(req: NextRequest) {
                 code: true,
                 title: true,
                 creditUnit: true,
-                lecturer: { select: { name: true } },
+                lecturer: { select: { name: true, signatureUrl: true } },
               },
             },
           },
@@ -50,6 +53,8 @@ export async function GET(req: NextRequest) {
         courseTitle: course.title,
         creditUnit: course.creditUnit,
         lecturerName: course.lecturer.name,
+        // Scanned signature image (base64 data URL) — null if the lecturer hasn't uploaded one yet.
+        lecturerSignatureUrl: course.lecturer.signatureUrl ?? null,
       },
     })
   } catch (err) {

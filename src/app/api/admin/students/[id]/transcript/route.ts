@@ -8,18 +8,22 @@ import { getCurrentUser } from '@/lib/auth'
 //   { student: { id, name, email, matricNumber, department },
 //     enrollments: [{
 //       id, courseCode, courseTitle, creditUnit, level, semester,
-//       quizAverage,        // average % across all quiz attempts for this course
-//       finalExamScore,     // best final-exam attempt % (or null)
-//       finalScore,         // lecturer-assigned final score (enrollment.finalScore)
-//       grade,              // A/B/C/D/F computed from finalScore (or null if not finalized)
-//       gradePoint,         // 5/4/3/2/0 (or null)
-//       certificateStatus,  // 'Issued' | 'Eligible' | 'Pending'
-//       certificateNumber,  // if issued
+//       lecturerName,              // <-- name of the lecturer who uploaded the course
+//       lecturerSignatureUrl,      // <-- their scanned signature (base64 data URL, or null)
+//       quizAverage,
+//       finalExamScore,
+//       finalScore,
+//       grade,
+//       gradePoint,
+//       certificateStatus,
+//       certificateNumber,
 //       enrolledAt,
 //       completedAt,
 //     }],
-//     gpa,                  // weighted GPA (0.00 - 5.00) across finalized enrollments
-//     totals }
+//     gpa,
+//     totals,
+//     issuedBy: { name, signatureUrl } | null  // <-- the admin/lecturer viewing the transcript
+//   }
 //
 // Grading scale:
 //   A >= 70 (5 points), B >= 60 (4), C >= 50 (3), D >= 40 (2), F < 40 (0)
@@ -44,7 +48,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Student not found' }, { status: 404 })
   }
 
-  // Pull every enrollment with its course + certificate
+  // Pull every enrollment with its course (including lecturer name + signature) + certificate
   const enrollments = await db.enrollment.findMany({
     where: { userId: id },
     include: {
@@ -56,6 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           creditUnit: true,
           level: true,
           semester: true,
+          lecturer: { select: { name: true, signatureUrl: true } },
         },
       },
       certificate: { select: { certificateNumber: true, issuedAt: true } },
@@ -63,7 +68,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     orderBy: { enrolledAt: 'asc' },
   })
 
-  // Pull all quiz attempts for the student (with course linkage through quiz→lesson→module)
+  // Pull all quiz attempts for the student (with course linkage through quiz->lesson->module)
   const quizAttempts = await db.quizAttempt.findMany({
     where: { userId: id },
     select: {
@@ -81,7 +86,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
 
-  // Pull all final-exam attempts for the student (with course linkage through exam→course)
+  // Pull all final-exam attempts for the student (with course linkage through exam->course)
   const finalExamAttempts = await db.finalExamAttempt.findMany({
     where: { userId: id },
     select: {
@@ -101,7 +106,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return { grade: 'F', gradePoint: 0 }
   }
 
-  // Group quiz attempts by courseId → average percentage
+  // Group quiz attempts by courseId -> average percentage
   const quizSumByCourse = new Map<string, number>()
   const quizCountByCourse = new Map<string, number>()
   for (const a of quizAttempts) {
@@ -117,7 +122,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     quizAvgMap.set(courseId, count > 0 ? Math.round(sum / count) : 0)
   }
 
-  // Group final-exam attempts by courseId → best percentage
+  // Group final-exam attempts by courseId -> best percentage
   const finalExamBestByCourse = new Map<string, number>()
   for (const a of finalExamAttempts) {
     const courseId = a.exam?.courseId
@@ -158,6 +163,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       creditUnit: en.course.creditUnit,
       level: en.course.level,
       semester: en.course.semester,
+      // Dynamic per-course lecturer (instead of a static "CHIEF EXAMINER" label)
+      lecturerName: en.course.lecturer.name,
+      lecturerSignatureUrl: en.course.lecturer.signatureUrl ?? null,
       quizAverage,
       finalExamScore,
       finalScore,
@@ -181,6 +189,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       coursesCompleted: enrollmentRows.filter((r) => r.completedAt).length,
       certificatesIssued: enrollmentRows.filter((r) => r.certificateStatus === 'Issued').length,
       totalCreditUnits,
+    },
+    // Who is viewing/issuing the transcript — their signature goes in the
+    // "Issued By" block at the bottom of the printed transcript.
+    issuedBy: {
+      name: user.name,
+      signatureUrl: user.signatureUrl ?? null,
     },
   })
 }

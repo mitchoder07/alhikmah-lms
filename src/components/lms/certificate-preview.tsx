@@ -20,6 +20,9 @@ export function CertificatePreview({
     courseTitle: string
     creditUnit: number
     lecturerName: string
+    // Optional: lecturer's scanned signature (base64 data URL). If present,
+    // we render the signature image above the printed lecturer name line.
+    lecturerSignatureUrl?: string | null
   }
 }) {
   const [qrUrl, setQrUrl] = useState<string>('')
@@ -46,6 +49,12 @@ export function CertificatePreview({
 
     const issuedDate = new Date(cert.issuedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     const verifyUrl = `${window.location.origin}/verify-certificate?cert=${cert.certificateNumber}`
+
+    // Signature image HTML — only render if the lecturer has uploaded one.
+    // The image is rendered on a transparent background; only the pen ink shows.
+    const lecturerSigHtml = cert.lecturerSignatureUrl
+      ? `<img src="${cert.lecturerSignatureUrl}" alt="Lecturer signature" style="max-height: 70px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
+      : ''
 
     win.document.write(`<!DOCTYPE html>
 <html>
@@ -85,9 +94,10 @@ export function CertificatePreview({
   .seal { position: absolute; top: 0; right: 40px; width: 70px; height: 70px; border-radius: 50%; border: 4px solid #D4AF37; background: rgba(212,175,55,0.1); display: flex; align-items: center; justify-content: center; font-size: 32px; }
   .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 40px; align-items: end; }
   .sig-block { text-align: center; }
+  .sig-image { height: 70px; display: flex; align-items: flex-end; justify-content: center; }
   .sig-line { border-top: 1px solid #999; padding-top: 4px; }
   .sig-name { font-size: 12px; font-weight: 600; color: #333; }
-  .sig-role { font-size: 11px; color: #555; font-weight: 600; }
+  .sig-role { font-size: 10px; color: #999; }
   .qr-block { text-align: center; }
   .qr-img { width: 90px; height: 90px; border: 1px solid #ddd; padding: 4px; }
   .qr-label { font-size: 8px; color: #999; margin-top: 4px; }
@@ -120,9 +130,9 @@ export function CertificatePreview({
 
         <div class="header">
           <div class="header-top">
-            <img src="/icon-192.png?v=3" alt="Logo" class="logo-img" style="width:56px;height:56px;border-radius:50%;" />
+            <div class="logo">BEC</div>
             <div style="text-align: left;">
-              <div class="uni-name">AL-BASHIR ACADEMY</div>
+              <div class="uni-name">AL-BASHIR EDUCATIONAL CONSULT</div>
               <div class="uni-sub">Ilorin, Kwara State, Nigeria</div>
               <div class="uni-sub">Department of Economics</div>
             </div>
@@ -155,9 +165,10 @@ export function CertificatePreview({
 
         <div class="signatures">
           <div class="sig-block">
+            <div class="sig-image">${lecturerSigHtml}</div>
             <div class="sig-line">
               <div class="sig-name">${cert.lecturerName}</div>
-              <div class="sig-role">Chief Examiner</div>
+              <div class="sig-role">Course Lecturer</div>
             </div>
           </div>
           <div class="qr-block">
@@ -165,9 +176,10 @@ export function CertificatePreview({
             <div class="qr-label">Scan to verify</div>
           </div>
           <div class="sig-block">
+            <div class="sig-image"></div>
             <div class="sig-line">
-              <div class="sig-name">Director</div>
-              <div class="sig-role">Al-Bashir Academy</div>
+              <div class="sig-name">Registrar</div>
+              <div class="sig-role">Al-Bashir Educational Consult</div>
             </div>
           </div>
         </div>
@@ -215,9 +227,9 @@ export function CertificatePreview({
 
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <img src="/icon-192.png?v=3" alt="Logo" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex-shrink-0" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0" style={{ background: 'linear-gradient(135deg, #006633, #003d1f)' }}>BEC</div>
                 <div className="text-left">
-                  <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-BASHIR ACADEMY</p>
+                  <p className="font-bold text-[#006633] text-base sm:text-lg leading-tight">AL-BASHIR EDUCATIONAL CONSULT</p>
                   <p className="text-[10px] text-gray-600">Ilorin, Kwara State, Nigeria</p>
                   <p className="text-[10px] text-gray-600">Department of Economics</p>
                 </div>
@@ -256,12 +268,35 @@ export function CertificatePreview({
             </div>
 
             <div className="grid grid-cols-3 gap-4 mt-12 items-end">
-              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">{cert.lecturerName}</p><p className="text-[10px] text-gray-500">Chief Examiner</p></div></div>
+              <div className="text-center">
+                {/* Lecturer signature image — transparent background, only the pen ink shows */}
+                {cert.lecturerSignatureUrl ? (
+                  <div className="h-16 flex items-end justify-center mb-1">
+                    <img
+                      src={cert.lecturerSignatureUrl}
+                      alt="Lecturer signature"
+                      className="max-h-16 max-w-[140px] object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-16" />
+                )}
+                <div className="border-t border-gray-400 pt-1">
+                  <p className="text-xs font-semibold text-gray-700">{cert.lecturerName}</p>
+                  <p className="text-[10px] text-gray-500">Course Lecturer</p>
+                </div>
+              </div>
               <div className="flex flex-col items-center">
                 {loading ? <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-[#006633]" /></div> : <img src={qrUrl} alt="Verify QR" className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-200 p-1" />}
                 <p className="text-[8px] text-gray-500 mt-1">Scan to verify</p>
               </div>
-              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">Director</p><p className="text-[10px] text-gray-500 font-semibold">Al-Bashir Academy</p></div></div>
+              <div className="text-center">
+                <div className="h-16" />
+                <div className="border-t border-gray-400 pt-1">
+                  <p className="text-xs font-semibold text-gray-700">Registrar</p>
+                  <p className="text-[10px] text-gray-500">Al-Bashir Educational Consult</p>
+                </div>
+              </div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-[#D4AF37]/40 text-center">

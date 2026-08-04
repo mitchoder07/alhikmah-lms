@@ -20,6 +20,10 @@ model User {
   phone         String?
   department    String   @default("Economics")
   avatarUrl     String?
+  // Physical signature image (base64 data URL) — used on certificates & transcripts.
+  // Lecturers/admins upload a scanned signature (on paper) and we store the image
+  // with the white background removed so only the pen ink remains.
+  signatureUrl  String?
   isApproved    Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -48,7 +52,7 @@ model Course {
   thumbnailUrl  String?
   isPublished   Boolean  @default(false)
   passMark      Int      @default(50)
-  certificateFee Float   @default(5000) // NGN — fee for certificate only
+  certificateFee Float   @default(5000) // NGN — fee for certificate only (editable any time)
   lecturerId    String
   // Live class fields (Zoom/Google Meet/Teams link)
   liveClassUrl      String?
@@ -240,7 +244,7 @@ model Enrollment {
   finalScore  Int?
   lecturerApproved Boolean @default(false)
 
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
   certificate Certificate?
 }
@@ -271,7 +275,7 @@ model Certificate {
   score         Int
   verified      Boolean  @default(true)
 
-  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
   user         User       @relation(fields: [userId], references: [id])
 }
 
@@ -284,7 +288,7 @@ model Announcement {
   publishAt   DateTime? // optional: schedule when the announcement becomes visible
   createdAt    DateTime @default(now())
 
-  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course      Course?  @relation(fields: [courseId], references: [id])
   author      User     @relation(fields: [authorId], references: [id])
 }
 
@@ -314,5 +318,5 @@ model BlogPost {
   updatedAt   DateTime @updatedAt
 
   author      User     @relation(fields: [authorId], references: [id])
-  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course      Course?  @relation(fields: [courseId], references: [id])
 }
