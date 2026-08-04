@@ -22,8 +22,6 @@ interface CertData {
   courseTitle: string
   creditUnit: number
   lecturerName: string
-  // Lecturer's scanned signature (base64 data URL) — null if not uploaded.
-  lecturerSignatureUrl?: string | null
 }
 
 export function CertificateVerifyPage() {
@@ -59,8 +57,8 @@ export function CertificateVerifyPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-9 w-9 rounded-full albashir-gradient flex items-center justify-center text-white font-bold text-[9px] flex-shrink-0">BEC</div>
-            <p className="font-semibold text-xs sm:text-sm truncate">Al-Bashir Educational Consult · Certificate Verification</p>
+            <img src="/icon-192.png?v=3" alt="Al-Bashir Academy" className="h-9 w-9 rounded-full flex-shrink-0" />
+            <p className="font-semibold text-xs sm:text-sm truncate">Al-Bashir Academy · Certificate Verification</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="flex-shrink-0"><ArrowLeft className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Home</span></Button>
         </div>
@@ -87,7 +85,7 @@ export function CertificateVerifyPage() {
                   <Label htmlFor="cert" className="sr-only">Certificate Number</Label>
                   <Input
                     id="cert"
-                    placeholder="e.g. BEC-CERT-2025-AB12CD"
+                    placeholder="e.g. ABA-CERT-2025-AB12CD"
                     value={certNumber}
                     onChange={(e) => setCertNumber(e.target.value)}
                     className="font-mono uppercase"
@@ -138,14 +136,14 @@ export function CertificateVerifyPage() {
 
           <div className="mt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Try: <button className="font-mono text-primary hover:underline" onClick={() => setCertNumber('BEC-CERT-2025-DEMO01')}>BEC-CERT-2025-DEMO01</button> (after issuing a demo cert)
+              Try: <button className="font-mono text-primary hover:underline" onClick={() => setCertNumber('ABA-CERT-2025-DEMO01')}>ABA-CERT-2025-DEMO01</button> (after issuing a demo cert)
             </p>
           </div>
         </div>
       </div>
 
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Al-Bashir Educational Consult · Department of Economics
+        © {new Date().getFullYear()} Al-Bashir Academy · Department of Economics
       </footer>
     </div>
   )

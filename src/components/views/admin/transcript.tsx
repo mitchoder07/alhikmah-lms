@@ -27,9 +27,6 @@ interface EnrollmentRow {
   creditUnit: number
   level: string
   semester: string
-  // Per-course lecturer who uploaded the course (replaces the old static "CHIEF EXAMINER" label)
-  lecturerName: string
-  lecturerSignatureUrl: string | null
   quizAverage: number | null
   finalExamScore: number | null
   finalScore: number | null
@@ -57,11 +54,6 @@ interface Transcript {
     certificatesIssued: number
     totalCreditUnits: number
   }
-  // The admin/lecturer currently viewing — their signature goes in the "Issued By" block.
-  issuedBy?: {
-    name: string
-    signatureUrl: string | null
-  } | null
 }
 
 // Map a letter grade to a tailwind badge color
@@ -146,8 +138,7 @@ export function AdminTranscript() {
           Transcripts
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          View, print, and edit a student&apos;s full academic record. Each course row shows
-          the lecturer who uploaded it, and your signature appears at the bottom of the printed copy.
+          View, print, and edit a student's full academic record. GPA is computed across finalized courses.
         </p>
       </div>
 
@@ -213,39 +204,42 @@ export function AdminTranscript() {
           {/* Student header */}
           <Card className="border-primary/20">
             <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start gap-4 flex-wrap">
-                <Avatar className="h-14 w-14 flex-shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-base font-medium">
-                    {transcript.student.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold">{transcript.student.name}</h3>
-                  <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground mt-1">
+              {/* Top row: avatar + name + print button */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar className="h-12 w-12 sm:h-14 sm:w-14 flex-shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm sm:text-base font-medium">
+                      {transcript.student.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-bold truncate">{transcript.student.name}</h3>
                     {transcript.student.matricNumber && (
-                      <span className="font-mono">{transcript.student.matricNumber}</span>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">{transcript.student.matricNumber}</p>
                     )}
-                    <span>·</span>
-                    <span>{transcript.student.email}</span>
-                    <span>·</span>
-                    <span>{transcript.student.department}</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                    <Stat label="Courses" value={String(transcript.totals.coursesEnrolled)} />
-                    <Stat label="Completed" value={String(transcript.totals.coursesCompleted)} />
-                    <Stat label="Certificates" value={String(transcript.totals.certificatesIssued)} />
-                    <Stat label="Credit Units" value={String(transcript.totals.totalCreditUnits)} />
                   </div>
                 </div>
-                <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90">
-                  <Printer className="h-4 w-4 mr-1" /> Print Transcript
+                <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 flex-shrink-0" size="sm">
+                  <Printer className="h-3.5 w-3.5 mr-1" /> Print
                 </Button>
+              </div>
+              {/* Info row */}
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-3">
+                <span>{transcript.student.email}</span>
+                <span>{transcript.student.department}</span>
+              </div>
+              {/* Stats grid */}
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-4">
+                <Stat label="Courses" value={String(transcript.totals.coursesEnrolled)} />
+                <Stat label="Completed" value={String(transcript.totals.coursesCompleted)} />
+                <Stat label="Certificates" value={String(transcript.totals.certificatesIssued)} />
+                <Stat label="Credit Units" value={String(transcript.totals.totalCreditUnits)} />
               </div>
             </CardContent>
           </Card>
 
           {/* Enrollments table */}
-          <Card>
+          <Card className="mt-2">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Academic Record</CardTitle>
               <CardDescription>
@@ -259,12 +253,14 @@ export function AdminTranscript() {
                   This student is not enrolled in any courses yet.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                {/* Desktop table — hidden on mobile */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-secondary/50 border-b text-xs">
                       <tr>
                         <th className="text-left p-3 font-medium">Course Code</th>
-                        <th className="text-left p-3 font-medium min-w-[200px]">Title &amp; Lecturer</th>
+                        <th className="text-left p-3 font-medium min-w-[180px]">Title</th>
                         <th className="text-center p-3 font-medium">CU</th>
                         <th className="text-center p-3 font-medium">Quiz Avg</th>
                         <th className="text-center p-3 font-medium">Final Exam</th>
@@ -275,13 +271,17 @@ export function AdminTranscript() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {transcript.enrollments.map((row) => (
+                      {[...transcript.enrollments].sort((a, b) => {
+                        const levelA = parseInt(a.level) || 0
+                        const levelB = parseInt(b.level) || 0
+                        if (levelB !== levelA) return levelB - levelA
+                        return a.courseCode.localeCompare(b.courseCode)
+                      }).map((row) => (
                         <tr key={row.id} className="hover:bg-secondary/20">
                           <td className="p-3 font-mono font-medium">{row.courseCode}</td>
                           <td className="p-3">
                             <p className="font-medium text-xs">{row.courseTitle}</p>
                             <p className="text-[10px] text-muted-foreground">Level {row.level} · {row.semester} Semester</p>
-                            <p className="text-[10px] text-primary/80 mt-0.5">Lecturer: <span className="font-medium">{row.lecturerName}</span></p>
                           </td>
                           <td className="text-center p-3">{row.creditUnit}</td>
                           <td className="text-center p-3">
@@ -325,6 +325,56 @@ export function AdminTranscript() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile cards — shown only on mobile */}
+                <div className="sm:hidden space-y-3 p-3">
+                  {[...transcript.enrollments].sort((a, b) => {
+                    const levelA = parseInt(a.level) || 0
+                    const levelB = parseInt(b.level) || 0
+                    if (levelB !== levelA) return levelB - levelA
+                    return a.courseCode.localeCompare(b.courseCode)
+                  }).map((row) => (
+                    <div key={row.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-mono font-medium text-sm">{row.courseCode}</p>
+                          <p className="text-xs text-muted-foreground">{row.courseTitle}</p>
+                          <p className="text-[10px] text-muted-foreground">Level {row.level} · {row.semester} Semester</p>
+                        </div>
+                        <GradeBadge grade={row.grade} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Quiz</p>
+                          <p className="font-medium">{row.quizAverage !== null ? `${row.quizAverage}%` : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Exam</p>
+                          <p className="font-medium">{row.finalExamScore !== null ? `${row.finalExamScore}%` : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Final</p>
+                          <p className="font-bold text-primary">{row.finalScore !== null ? `${row.finalScore}%` : '—'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <div>
+                          {row.certificateStatus === 'Issued' ? (
+                            <Badge className="bg-gold/20 text-gold text-[10px]"><Award className="h-2.5 w-2.5 mr-0.5" />Issued</Badge>
+                          ) : row.certificateStatus === 'Eligible' ? (
+                            <Badge variant="secondary" className="text-[10px] text-amber-600">Eligible</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Pending</Badge>
+                          )}
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(row)}>
+                          <Pencil className="h-3 w-3 mr-1" /> Edit
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -350,17 +400,6 @@ export function AdminTranscript() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Issued by signature reminder */}
-          {transcript.issuedBy && !transcript.issuedBy.signatureUrl && (
-            <Card className="border-amber-200 bg-amber-50/50">
-              <CardContent className="p-3 text-xs text-amber-900">
-                <strong>Heads up:</strong> You haven&apos;t uploaded your signature yet.
-                The printed transcript will show your printed name only.
-                Upload your signature in <strong>Settings → Lecturer / Admin Signature</strong> to have it appear here.
-              </CardContent>
-            </Card>
-          )}
         </>
       )}
 
@@ -411,9 +450,9 @@ export function AdminTranscript() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-secondary/40 px-3 py-2">
-      <p className="text-base font-bold text-foreground">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+    <div className="rounded-lg bg-secondary/40 px-2 py-2 sm:px-4 sm:py-3 text-center">
+      <p className="text-base sm:text-lg font-bold text-foreground">{value}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{label}</p>
     </div>
   )
 }
@@ -421,7 +460,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 // Build a clean printable HTML document for the transcript (mirrors the certificate download approach)
 function buildPrintHtml(t: Transcript): string {
   const student = t.student
-  const rows = t.enrollments.map((r) => {
+  // Sort enrollments by level descending (400 level first, then 300, 200, 100)
+  const sortedEnrollments = [...t.enrollments].sort((a, b) => {
+    const levelA = parseInt(a.level) || 0
+    const levelB = parseInt(b.level) || 0
+    if (levelB !== levelA) return levelB - levelA
+    return a.courseCode.localeCompare(b.courseCode)
+  })
+  const rows = sortedEnrollments.map((r) => {
     const scoreCell = r.finalScore !== null ? `${r.finalScore}%` : '—'
     const quizCell = r.quizAverage !== null ? `${r.quizAverage}%` : '—'
     const examCell = r.finalExamScore !== null ? `${r.finalExamScore}%` : '—'
@@ -429,7 +475,7 @@ function buildPrintHtml(t: Transcript): string {
     const statusCell = r.certificateStatus
     return `<tr>
       <td>${escapeHtml(r.courseCode)}</td>
-      <td>${escapeHtml(r.courseTitle)}<div class="meta">Level ${escapeHtml(r.level)} · ${escapeHtml(r.semester)} Semester · ${r.creditUnit} CU</div><div class="lecturer">Lecturer: ${escapeHtml(r.lecturerName)}</div></td>
+      <td>${escapeHtml(r.courseTitle)}<div class="meta">Level ${escapeHtml(r.level)} · ${escapeHtml(r.semester)} Semester · ${r.creditUnit} CU</div></td>
       <td class="num">${quizCell}</td>
       <td class="num">${examCell}</td>
       <td class="num score">${scoreCell}</td>
@@ -440,14 +486,6 @@ function buildPrintHtml(t: Transcript): string {
 
   const issuedDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const gpaDisplay = t.gpa !== null ? t.gpa.toFixed(2) : '—'
-
-  // Issued-by block — uses the admin/lecturer's uploaded signature if present.
-  const issuedBy = t.issuedBy
-  const issuedBySigHtml = issuedBy?.signatureUrl
-    ? `<img src="${issuedBy.signatureUrl}" alt="Signature" style="max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
-    : ''
-  const issuedByName = issuedBy?.name ?? 'Registrar'
-  const issuedByRole = issuedBy ? 'Issuing Officer' : 'Al-Bashir Educational Consult'
 
   return `<!DOCTYPE html>
 <html>
@@ -463,7 +501,7 @@ function buildPrintHtml(t: Transcript): string {
   .toolbar button { background: #D4AF37; color: black; border: none; padding: 8px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; }
   .header { text-align: center; margin-bottom: 20px; }
   .header-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
-  .logo { width: 56px; height: 56px; border-radius: 50%; background: #006633; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+  .logo { width: 56px; height: 56px; border-radius: 50%; background: #006633; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .uni-name { font-weight: bold; color: #006633; font-size: 17px; }
   .uni-sub { font-size: 10px; color: #666; }
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #D4AF37, transparent); margin: 8px 0; }
@@ -482,7 +520,6 @@ function buildPrintHtml(t: Transcript): string {
   tbody td.score { font-weight: bold; color: #006633; }
   tbody td.grade { font-weight: bold; color: #D4AF37; font-size: 13px; }
   td .meta { font-size: 9px; color: #999; margin-top: 2px; }
-  td .lecturer { font-size: 9px; color: #006633; margin-top: 1px; font-weight: 600; }
   .gpa-row { margin-top: 18px; padding: 14px 18px; background: #fafaf5; border: 1px solid #D4AF37; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
   .gpa-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 2px; }
   .gpa-value { font-size: 28px; font-weight: bold; color: #006633; }
@@ -492,15 +529,15 @@ function buildPrintHtml(t: Transcript): string {
   .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #D4AF37; text-align: center; font-size: 9px; color: #999; }
   .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
   .sign-block { text-align: center; }
-  .sign-image { height: 60px; display: flex; align-items: flex-end; justify-content: center; }
   .sign-line { border-top: 1px solid #666; padding-top: 4px; }
-  .sign-name { font-size: 12px; font-weight: 600; }
-  .sign-role { font-size: 10px; color: #999; }
+  .sign-name { font-size: 12px; font-weight: 600; color: #333; }
+  .sign-role { font-size: 11px; color: #555; font-weight: 600; }
   @page { size: A4 portrait; margin: 0.5in; }
   @media print {
     .toolbar { display: none; }
     body { background: white; padding: 0; }
     .wrap { border-width: 4px; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
 </style>
 </head>
@@ -512,9 +549,9 @@ function buildPrintHtml(t: Transcript): string {
     <div class="inner">
       <div class="header">
         <div class="header-top">
-          <div class="logo">BEC</div>
+          <img src="/icon-192.png?v=2" alt="Logo" class="logo-img" style="width:56px;height:56px;border-radius:50%;" />
           <div style="text-align: left;">
-            <div class="uni-name">AL-BASHIR EDUCATIONAL CONSULT</div>
+            <div class="uni-name">AL-BASHIR ACADEMY</div>
             <div class="uni-sub">Ilorin, Kwara State, Nigeria</div>
             <div class="uni-sub">Department of Economics</div>
           </div>
@@ -568,24 +605,22 @@ function buildPrintHtml(t: Transcript): string {
 
       <div class="sign-row">
         <div class="sign-block">
-          <div class="sign-image"></div>
           <div class="sign-line">
-            <div class="sign-name">Registrar</div>
-            <div class="sign-role">Al-Bashir Educational Consult</div>
+            <div class="sign-name">Chief Examiner</div>
+            <div class="sign-role">Dept. of Economics</div>
           </div>
         </div>
         <div class="sign-block">
-          <div class="sign-image">${issuedBySigHtml}</div>
           <div class="sign-line">
-            <div class="sign-name">${escapeHtml(issuedByName)}</div>
-            <div class="sign-role">${escapeHtml(issuedByRole)}</div>
+            <div class="sign-name">Director</div>
+            <div class="sign-role">Al-Bashir Academy</div>
           </div>
         </div>
       </div>
 
       <div class="footer">
-        <p>Issued on ${issuedDate} · Al-Bashir Educational Consult, Department of Economics.</p>
-        <p style="margin-top: 4px;">This transcript is for official use. Verify with the registrar&apos;s office if in doubt.</p>
+        <p>Issued on ${issuedDate} · Al-Bashir Academy, Department of Economics.</p>
+        <p style="margin-top: 4px;">This transcript is for official use. Verify with the registrar's office if in doubt.</p>
       </div>
     </div>
   </div>

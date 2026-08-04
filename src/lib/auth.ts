@@ -64,7 +64,6 @@ export async function getCurrentUser() {
     matricNumber: user.matricNumber,
     department: user.department,
     avatarUrl: user.avatarUrl,
-    signatureUrl: user.signatureUrl,
   }
 }
 

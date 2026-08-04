@@ -13,10 +13,7 @@ import { useSession } from '@/components/app-provider'
 
 interface Enrollment {
   id: string; enrolledAt: string; finalScore: number | null; lecturerApproved: boolean; completedAt: string | null
-  course: {
-    id: string; code: string; title: string; creditUnit: number; certificateFee: number; passMark: number
-    lecturer: { name: string; signatureUrl?: string | null }
-  }
+  course: { id: string; code: string; title: string; creditUnit: number; certificateFee: number; passMark: number; lecturer: { name: string } }
   certificate: { certificateNumber: string; issuedAt: string; score: number } | null
 }
 
@@ -83,8 +80,6 @@ export function StudentCertificates({ onNavigate }: { onNavigate: (v: string, p?
                       courseTitle: e.course.title,
                       creditUnit: e.course.creditUnit,
                       lecturerName: e.course.lecturer.name,
-                      // Pass the lecturer's uploaded signature so it renders in the preview/download.
-                      lecturerSignatureUrl: e.course.lecturer.signatureUrl ?? null,
                     })}>
                       <Eye className="h-3 w-3 mr-1" /> Preview
                     </Button>
