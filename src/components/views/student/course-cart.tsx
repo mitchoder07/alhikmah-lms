@@ -122,43 +122,78 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
     if (cartCourses.length === 0) return
     setPaying(true)
     try {
-      // Initiate payment for each course sequentially (demo mode will auto-succeed)
-      const references: Array<{ courseId: string; reference: string; demo: boolean; authorization_url?: string }> = []
+      // Initiate payment for each course sequentially.
+      // Skip courses the user already has active access to (the backend returns
+      // 400 "You already have active access" — we treat that as a success for
+      // the cart flow, since the goal is to grant access, which already exists).
+      const references: Array<{ courseId: string; reference: string; demo: boolean; authorization_url?: string; alreadyOwned: boolean }> = []
       for (const course of cartCourses) {
-        const res = await apiPost(`/api/courses/${course.id}/access`, { provider: 'paystack' })
-        references.push({
-          courseId: course.id,
-          reference: res.reference,
-          demo: !!res.demo,
-          authorization_url: res.authorization_url,
-        })
+        try {
+          const res = await apiPost(`/api/courses/${course.id}/access`, { provider: 'paystack' })
+          references.push({
+            courseId: course.id,
+            reference: res.reference,
+            demo: !!res.demo,
+            authorization_url: res.authorization_url,
+            alreadyOwned: false,
+          })
+        } catch (e: any) {
+          // If the user already has access, treat as success — skip payment for this one
+          if (e?.message && e.message.toLowerCase().includes('already have active access')) {
+            references.push({
+              courseId: course.id,
+              reference: '',
+              demo: true,
+              authorization_url: undefined,
+              alreadyOwned: true,
+            })
+          } else {
+            // Any other error (course not found, etc.) — re-throw to abort
+            throw e
+          }
+        }
       }
 
-      // Check if any require real payment gateway redirect
-      const realRedirect = references.find((r) => !r.demo && r.authorization_url?.startsWith('http'))
+      // Real gateway mode: if any course returned a real Paystack/Flutterwave URL,
+      // redirect to the first one. The remaining courses stay in the cart so the
+      // student can pay for them after returning from the gateway.
+      const realRedirect = references.find((r) => !r.demo && !r.alreadyOwned && r.authorization_url?.startsWith('http'))
       if (realRedirect) {
-        // Real gateway — redirect to the first real checkout
         window.location.href = realRedirect.authorization_url!
         return
       }
 
-      // Demo mode — verify each payment as success
+      // Demo mode — verify each non-already-owned payment as success
       const failed: string[] = []
+      const succeeded: string[] = []
       for (const r of references) {
+        if (r.alreadyOwned) {
+          succeeded.push(r.courseId)
+          continue
+        }
         try {
-          await apiPost(`/api/courses/${r.courseId}/access/verify`, {
+          const vres = await apiPost(`/api/courses/${r.courseId}/access/verify`, {
             reference: r.reference,
             status: 'success',
           })
+          if (vres.status === 'success') {
+            succeeded.push(r.courseId)
+          } else {
+            failed.push(r.courseId)
+          }
         } catch {
           failed.push(r.courseId)
         }
       }
 
-      if (failed.length > 0) {
-        toast.error(`${failed.length} payment(s) failed to verify`)
+      if (failed.length > 0 && succeeded.length === 0) {
+        toast.error(`${failed.length} payment(s) failed to verify. Please try again.`)
+      } else if (failed.length > 0) {
+        toast.success(`Paid for ${succeeded.length} course(s). ${failed.length} failed — try again for those.`)
+        clear()
+        setSuccess(true)
       } else {
-        toast.success(`Successfully paid for ${cartCourses.length} course(s)!`)
+        toast.success(`Successfully paid for ${succeeded.length} course(s)!`)
         clear()
         setSuccess(true)
       }

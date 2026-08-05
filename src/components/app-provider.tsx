@@ -13,6 +13,7 @@ interface SessionUser {
   matricNumber?: string | null
   department?: string
   avatarUrl?: string | null
+  signatureUrl?: string | null
 }
 
 interface SessionState {

@@ -21,6 +21,8 @@ export function StudentCheckout({ enrollmentId, courseId, onNavigate }: { enroll
   const [provider, setProvider] = useState<Provider>('paystack')
   const [initiating, setInitiating] = useState(false)
   const [payRef, setPayRef] = useState<string | null>(null)
+  const [demoMode, setDemoMode] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -31,12 +33,28 @@ export function StudentCheckout({ enrollmentId, courseId, onNavigate }: { enroll
     setInitiating(true)
     try {
       const res = await apiPost('/api/payments/initiate', { enrollmentId, courseId, provider })
-      setPayRef(res.reference)
-      if (res.demo) {
-        toast.info(`Demo mode (${provider}): clicking "I've Completed Payment" will mark the payment as successful.`)
-      } else if (res.authorization_url) {
-        window.location.href = res.authorization_url
+      // Real gateway mode: backend returned a real Paystack/Flutterwave checkout URL.
+      // Set redirecting state (NOT payRef) so the UI shows a "Redirecting..." spinner
+      // instead of the demo card, then redirect.
+      if (res.authorization_url && res.authorization_url.startsWith('http')) {
+        setRedirecting(true)
+        // Small delay so the spinner is visible before the browser navigates away
+        setTimeout(() => {
+          window.location.href = res.authorization_url
+        }, 400)
+        return
       }
+      // Demo mode: backend returned demo: true and a relative URL. Show the
+      // demo card with the "I've Completed Payment" button.
+      if (res.demo || (res.authorization_url && !res.authorization_url.startsWith('http'))) {
+        setPayRef(res.reference)
+        setDemoMode(true)
+        toast.info(`Demo mode (${provider}): clicking "I've Completed Payment" will mark the payment as successful.`)
+        return
+      }
+      // Fallback (shouldn't happen)
+      setPayRef(res.reference)
+      setDemoMode(true)
     } catch (e: any) {
       toast.error(e.message)
     } finally {
@@ -173,10 +191,18 @@ export function StudentCheckout({ enrollmentId, courseId, onNavigate }: { enroll
           </label>
 
           {!payRef ? (
-            <Button className="w-full bg-primary hover:bg-primary/90" onClick={initiate} disabled={initiating}>
-              {initiating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-              Pay ₦{course.certificateFee.toLocaleString()} with {provider === 'paystack' ? 'Paystack' : 'Flutterwave'}
-            </Button>
+            redirecting ? (
+              <div className="w-full p-6 rounded-lg bg-secondary/50 flex flex-col items-center gap-2 text-sm">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <p className="font-medium">Redirecting to {provider === 'paystack' ? 'Paystack' : 'Flutterwave'}...</p>
+                <p className="text-xs text-muted-foreground">Please don't close this window.</p>
+              </div>
+            ) : (
+              <Button className="w-full bg-primary hover:bg-primary/90" onClick={initiate} disabled={initiating}>
+                {initiating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                Pay ₦{course.certificateFee.toLocaleString()} with {provider === 'paystack' ? 'Paystack' : 'Flutterwave'}
+              </Button>
+            )
           ) : (
             <div className="space-y-3">
               <div className="rounded-md bg-secondary/50 p-3 text-xs">

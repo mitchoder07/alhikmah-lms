@@ -129,16 +129,39 @@ export function StudentCourses({ onNavigate }: { onNavigate: (v: string, p?: any
     setEnrolling(course.id)
     try {
       const res = await apiPost(`/api/courses/${course.id}/access`, { provider: 'paystack' })
-      if (res.authorization_url) {
-        // Demo mode returns a relative URL; real gateway returns absolute URL.
-        if (res.authorization_url.startsWith('http')) {
-          window.location.href = res.authorization_url
-        } else {
-          router.push(res.authorization_url)
-        }
-      } else {
-        toast.success('Payment initiated')
+      // Real gateway mode: backend returns a real Paystack/Flutterwave checkout URL.
+      // Redirect the browser there immediately.
+      if (res.authorization_url && res.authorization_url.startsWith('http')) {
+        window.location.href = res.authorization_url
+        return
       }
+      // Demo mode (no secret key configured): the backend returns a relative URL
+      // and demo: true. There is no real checkout page to navigate to, so we
+      // immediately call the verify endpoint to mark the payment as success and
+      // grant course access — exactly what the course cart does in its demo path.
+      if (res.demo || (res.authorization_url && !res.authorization_url.startsWith('http'))) {
+        toast.info('Demo mode: simulating successful payment to grant course access...')
+        try {
+          const vres = await apiPost(`/api/courses/${course.id}/access/verify`, {
+            reference: res.reference,
+            status: 'success',
+          })
+          if (vres.status === 'success') {
+            toast.success('Payment successful! You now have access to this course.')
+            // Force re-fetch of access status so the card flips to "Access Active"
+            window.dispatchEvent(new Event('albashir-cart-change'))
+            // Trigger a reload of the enrollments + access map by re-fetching
+            setTimeout(() => window.location.reload(), 1200)
+          } else {
+            toast.error('Demo verification failed. Please try again.')
+          }
+        } catch (verr: any) {
+          toast.error(verr.message || 'Demo verification failed. Please try again.')
+        }
+        return
+      }
+      // Fallback (shouldn't happen) — surface whatever the backend returned
+      toast.success('Payment initiated')
     } catch (e: any) {
       toast.error(e.message || 'Failed to initiate payment')
     } finally {

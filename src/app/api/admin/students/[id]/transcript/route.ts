@@ -182,5 +182,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       certificatesIssued: enrollmentRows.filter((r) => r.certificateStatus === 'Issued').length,
       totalCreditUnits,
     },
+    // The admin/lecturer currently viewing the transcript — their name + scanned
+    // signature appear in the "Chief Examiner" sign block at the bottom of the
+    // printed transcript, replacing the old static "CHIEF EXAMINER" label.
+    issuedBy: {
+      name: user.name,
+      signatureUrl: user.signatureUrl ?? null,
+    },
   })
 }

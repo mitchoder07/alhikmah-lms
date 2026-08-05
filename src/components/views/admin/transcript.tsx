@@ -54,6 +54,13 @@ interface Transcript {
     certificatesIssued: number
     totalCreditUnits: number
   }
+  // The admin/lecturer currently viewing the transcript. Their name replaces
+  // the old static "Chief Examiner" label, and their scanned signature (if
+  // uploaded) renders above the printed name on the printed copy.
+  issuedBy?: {
+    name: string
+    signatureUrl: string | null
+  } | null
 }
 
 // Map a letter grade to a tailwind badge color
@@ -487,6 +494,15 @@ function buildPrintHtml(t: Transcript): string {
   const issuedDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const gpaDisplay = t.gpa !== null ? t.gpa.toFixed(2) : '—'
 
+  // Issuing officer (the admin/lecturer currently viewing). Their name replaces
+  // the old static "Chief Examiner" label, and their scanned signature (if any)
+  // renders above the printed name. Falls back to "Chief Examiner" only if no
+  // user info is available (e.g. older API response).
+  const issuedByName = t.issuedBy?.name || 'Chief Examiner'
+  const issuedBySigHtml = t.issuedBy?.signatureUrl
+    ? `<img src="${t.issuedBy.signatureUrl}" alt="Signature" style="max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
+    : ''
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -529,6 +545,7 @@ function buildPrintHtml(t: Transcript): string {
   .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #D4AF37; text-align: center; font-size: 9px; color: #999; }
   .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
   .sign-block { text-align: center; }
+  .sign-image { height: 60px; display: flex; align-items: flex-end; justify-content: center; }
   .sign-line { border-top: 1px solid #666; padding-top: 4px; }
   .sign-name { font-size: 12px; font-weight: 600; color: #333; }
   .sign-role { font-size: 11px; color: #555; font-weight: 600; }
@@ -605,12 +622,14 @@ function buildPrintHtml(t: Transcript): string {
 
       <div class="sign-row">
         <div class="sign-block">
+          <div class="sign-image">${issuedBySigHtml}</div>
           <div class="sign-line">
-            <div class="sign-name">Chief Examiner</div>
+            <div class="sign-name">${escapeHtml(issuedByName)}</div>
             <div class="sign-role">Dept. of Economics</div>
           </div>
         </div>
         <div class="sign-block">
+          <div class="sign-image"></div>
           <div class="sign-line">
             <div class="sign-name">Director</div>
             <div class="sign-role">Al-Bashir Academy</div>
