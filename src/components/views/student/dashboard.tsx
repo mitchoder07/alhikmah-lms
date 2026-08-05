@@ -28,7 +28,7 @@ interface Enrollment {
 export function StudentDashboard({ onNavigate }: { onNavigate: (v: string, p?: any) => void }) {
   const { user } = useSession()
   const { data: coursesData } = useApi<{ courses: Course[] }>('/api/courses')
-  const { data: enrollData, loading } = useApi<{ enrollments: Enrollment[] }>('/api/enrollments')
+  const { data: enrollData, loading, error: enrollError, refetch: refetchEnrollments } = useApi<{ enrollments: Enrollment[] }>('/api/enrollments')
 
   const enrollments = enrollData?.enrollments ?? []
   const inProgress = enrollments.filter(e => !e.completedAt)
@@ -85,7 +85,15 @@ export function StudentDashboard({ onNavigate }: { onNavigate: (v: string, p?: a
             <h3 className="font-semibold text-sm sm:text-base">Continue Learning</h3>
             <Button variant="ghost" size="sm" onClick={() => onNavigate('courses')} className="text-xs h-8">View all <ArrowRight className="h-3 w-3 ml-1" /></Button>
           </div>
-          {loading ? (
+          {enrollError ? (
+            <Card>
+              <CardContent className="py-8 sm:py-10 text-center">
+                <p className="text-sm font-medium text-destructive">Couldn't load your enrollments.</p>
+                <p className="text-xs text-muted-foreground mt-1">Something went wrong while fetching your courses. Please refresh the page or try again.</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={refetchEnrollments}>Try again</Button>
+              </CardContent>
+            </Card>
+          ) : loading ? (
             <p className="text-sm text-muted-foreground">Loading</p>
           ) : inProgress.length === 0 ? (
             <Card><CardContent className="py-8 sm:py-10 text-center text-sm text-muted-foreground">No active courses. Browse the catalog to enroll.</CardContent></Card>

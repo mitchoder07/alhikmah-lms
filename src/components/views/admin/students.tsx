@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Search, Users, Trash2, Plus, Upload, Mail, Loader2, X, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { useSession } from '@/components/app-provider'
 
 interface Student {
   id: string; name: string; email: string; matricNumber: string | null; phone: string | null; department: string; createdAt: string
@@ -19,6 +20,10 @@ interface Student {
 }
 
 export function AdminStudents() {
+  const { user } = useSession()
+  // Student management is admin-only — lecturers can view the roster but must not
+  // be able to reset passwords, bulk import, or delete students.
+  const isAdmin = user?.role === 'ADMIN'
   const { data, loading, refetch } = useApi<{ students: Student[] }>('/api/admin/students')
   const [q, setQ] = useState('')
   const [importOpen, setImportOpen] = useState(false)
@@ -45,9 +50,11 @@ export function AdminStudents() {
           <h2 className="text-2xl font-bold">Student Roster</h2>
           <p className="text-sm text-muted-foreground mt-1">{data?.students.length ?? 0} students enrolled in the department.</p>
         </div>
-        <Button onClick={() => setImportOpen(true)} className="bg-primary hover:bg-primary/90">
-          <Upload className="h-4 w-4 mr-1" /> Bulk Import
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setImportOpen(true)} className="bg-primary hover:bg-primary/90">
+            <Upload className="h-4 w-4 mr-1" /> Bulk Import
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-md">
@@ -90,21 +97,23 @@ export function AdminStudents() {
                       {s._count.certificates > 0 && <Badge variant="secondary" className="text-[10px] bg-gold/20 text-gold">{s._count.certificates} cert(s)</Badge>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-primary"
-                      title="Reset password"
-                      aria-label={`Reset password for ${s.name}`}
-                      onClick={() => setResetTarget(s)}
-                    >
-                      <KeyRound className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(s.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-primary"
+                        title="Reset password"
+                        aria-label={`Reset password for ${s.name}`}
+                        onClick={() => setResetTarget(s)}
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(s.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
