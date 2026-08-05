@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
                 code: true,
                 title: true,
                 creditUnit: true,
-                lecturer: { select: { name: true } },
+                lecturer: { select: { name: true, signatureUrl: true } },
               },
             },
           },
@@ -36,6 +36,11 @@ export async function GET(req: NextRequest) {
     }
 
     const course = cert.enrollment.course
+    const director = await db.user.findFirst({
+      where: { role: 'ADMIN', signatureUrl: { not: null } },
+      select: { name: true, signatureUrl: true },
+      orderBy: { updatedAt: 'desc' },
+    })
 
     return NextResponse.json({
       certificate: {
@@ -50,6 +55,9 @@ export async function GET(req: NextRequest) {
         courseTitle: course.title,
         creditUnit: course.creditUnit,
         lecturerName: course.lecturer.name,
+        lecturerSignatureUrl: course.lecturer.signatureUrl ?? null,
+        directorName: director?.name ?? 'Director',
+        directorSignatureUrl: director?.signatureUrl ?? null,
       },
     })
   } catch (err) {

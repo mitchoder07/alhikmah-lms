@@ -56,6 +56,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           creditUnit: true,
           level: true,
           semester: true,
+          lecturer: { select: { name: true, signatureUrl: true, department: true } },
         },
       },
       certificate: { select: { certificateNumber: true, issuedAt: true } },
@@ -182,12 +183,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       certificatesIssued: enrollmentRows.filter((r) => r.certificateStatus === 'Issued').length,
       totalCreditUnits,
     },
-    // The admin/lecturer currently viewing the transcript — their name + scanned
-    // signature appear in the "Chief Examiner" sign block at the bottom of the
-    // printed transcript, replacing the old static "CHIEF EXAMINER" label.
-    issuedBy: {
-      name: user.name,
-      signatureUrl: user.signatureUrl ?? null,
-    },
+    // A transcript is signed by the lecturer who owns the student's course,
+    // never by whichever portal administrator happens to open the page.
+    director: await db.user.findFirst({
+      where: { role: 'ADMIN', signatureUrl: { not: null } },
+      select: { name: true, signatureUrl: true },
+      orderBy: { updatedAt: 'desc' },
+    }),
+    issuedBy: (() => {
+      const courseWithLecturer = enrollments.find((en) => en.course.lecturer)
+      const lecturer = courseWithLecturer?.course.lecturer
+      return lecturer ? { name: lecturer.name, signatureUrl: lecturer.signatureUrl ?? null, department: lecturer.department } : null
+    })(),
   })
 }

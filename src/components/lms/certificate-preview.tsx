@@ -20,6 +20,9 @@ export function CertificatePreview({
     courseTitle: string
     creditUnit: number
     lecturerName: string
+    lecturerSignatureUrl: string | null
+    directorName: string
+    directorSignatureUrl: string | null
   }
 }) {
   const [qrUrl, setQrUrl] = useState<string>('')
@@ -85,6 +88,8 @@ export function CertificatePreview({
   .seal { position: absolute; top: 0; right: 40px; width: 70px; height: 70px; border-radius: 50%; border: 4px solid #D4AF37; background: rgba(212,175,55,0.1); display: flex; align-items: center; justify-content: center; font-size: 32px; }
   .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 40px; align-items: end; }
   .sig-block { text-align: center; }
+  .sig-image { height: 54px; display: flex; align-items: flex-end; justify-content: center; }
+  .sig-image img { max-height: 52px; max-width: 160px; object-fit: contain; }
   .sig-line { border-top: 1px solid #999; padding-top: 4px; }
   .sig-name { font-size: 12px; font-weight: 600; color: #333; }
   .sig-role { font-size: 11px; color: #555; font-weight: 600; }
@@ -155,9 +160,10 @@ export function CertificatePreview({
 
         <div class="signatures">
           <div class="sig-block">
+            <div class="sig-image">${cert.lecturerSignatureUrl ? `<img src="${cert.lecturerSignatureUrl}" alt="Lecturer signature" />` : ''}</div>
             <div class="sig-line">
               <div class="sig-name">${cert.lecturerName}</div>
-              <div class="sig-role">Chief Examiner</div>
+              <div class="sig-role">Course Lecturer</div>
             </div>
           </div>
           <div class="qr-block">
@@ -165,9 +171,10 @@ export function CertificatePreview({
             <div class="qr-label">Scan to verify</div>
           </div>
           <div class="sig-block">
+            <div class="sig-image">${cert.directorSignatureUrl ? `<img src="${cert.directorSignatureUrl}" alt="Director signature" />` : ''}</div>
             <div class="sig-line">
-              <div class="sig-name">Director</div>
-              <div class="sig-role">Al-Bashir Academy</div>
+              <div class="sig-name">${cert.directorName}</div>
+              <div class="sig-role">Director, Al-Bashir Academy</div>
             </div>
           </div>
         </div>
@@ -256,12 +263,12 @@ export function CertificatePreview({
             </div>
 
             <div className="grid grid-cols-3 gap-4 mt-12 items-end">
-              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">{cert.lecturerName}</p><p className="text-[10px] text-gray-500">Chief Examiner</p></div></div>
+              <div className="text-center"><div className="h-14 flex items-end justify-center">{cert.lecturerSignatureUrl && <img src={cert.lecturerSignatureUrl} alt="Lecturer signature" className="max-h-12 max-w-32 object-contain" />}</div><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">{cert.lecturerName}</p><p className="text-[10px] text-gray-500">Course Lecturer</p></div></div>
               <div className="flex flex-col items-center">
                 {loading ? <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-[#006633]" /></div> : <img src={qrUrl} alt="Verify QR" className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-200 p-1" />}
                 <p className="text-[8px] text-gray-500 mt-1">Scan to verify</p>
               </div>
-              <div className="text-center"><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">Director</p><p className="text-[10px] text-gray-500 font-semibold">Al-Bashir Academy</p></div></div>
+              <div className="text-center"><div className="h-14 flex items-end justify-center">{cert.directorSignatureUrl && <img src={cert.directorSignatureUrl} alt="Director signature" className="max-h-12 max-w-32 object-contain" />}</div><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">{cert.directorName}</p><p className="text-[10px] text-gray-500 font-semibold">Director, Al-Bashir Academy</p></div></div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-[#D4AF37]/40 text-center">

@@ -13,15 +13,16 @@ import { useSession } from '@/components/app-provider'
 
 interface Enrollment {
   id: string; enrolledAt: string; finalScore: number | null; lecturerApproved: boolean; completedAt: string | null
-  course: { id: string; code: string; title: string; creditUnit: number; certificateFee: number; passMark: number; lecturer: { name: string } }
+  course: { id: string; code: string; title: string; creditUnit: number; certificateFee: number; passMark: number; lecturer: { name: string; signatureUrl: string | null } }
   certificate: { certificateNumber: string; issuedAt: string; score: number } | null
 }
 
 export function StudentCertificates({ onNavigate }: { onNavigate: (v: string, p?: any) => void }) {
   const router = useRouter()
   const { user } = useSession()
-  const { data, loading } = useApi<{ enrollments: Enrollment[] }>('/api/enrollments')
+  const { data, loading } = useApi<{ enrollments: Enrollment[]; director: { name: string; signatureUrl: string | null } | null }>('/api/enrollments')
   const enrollments = data?.enrollments ?? []
+  const director = data?.director ?? null
   const [previewCert, setPreviewCert] = useState<any | null>(null)
 
   const issued = enrollments.filter(e => e.certificate)
@@ -80,6 +81,9 @@ export function StudentCertificates({ onNavigate }: { onNavigate: (v: string, p?
                       courseTitle: e.course.title,
                       creditUnit: e.course.creditUnit,
                       lecturerName: e.course.lecturer.name,
+                      lecturerSignatureUrl: e.course.lecturer.signatureUrl,
+                      directorName: director?.name ?? 'Director',
+                      directorSignatureUrl: director?.signatureUrl ?? null,
                     })}>
                       <Eye className="h-3 w-3 mr-1" /> Preview
                     </Button>
