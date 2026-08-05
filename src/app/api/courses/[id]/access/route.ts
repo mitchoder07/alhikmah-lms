@@ -98,7 +98,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await db.payment.create({
     data: {
       userId: user.id,
-      courseId,
+      courseId: id,
       amount,
       provider,
       reference,
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         amount: Math.round(amount * 100),
         reference,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/?view=course-checkout&ref=${reference}`,
-        metadata: { courseId, userId: user.id, provider: 'paystack', type: 'course_access' },
+        metadata: { courseId: id, userId: user.id, provider: 'paystack', type: 'course_access' },
       }),
     })
     const data = await res.json()
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       customer: { email: user.email, name: user.name },
       payment_options: 'card,banktransfer,ussd,account',
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/?view=course-checkout&ref=${reference}`,
-      meta: { courseId, userId: user.id, provider: 'flutterwave', type: 'course_access' },
+      meta: { courseId: id, userId: user.id, provider: 'flutterwave', type: 'course_access' },
       customizations: {
         title: 'Al-Bashir Academy LMS Course Access',
         description: `Course access fee for ${course.code}`,
