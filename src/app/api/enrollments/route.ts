@@ -10,7 +10,7 @@ export async function GET() {
     include: {
       course: {
         include: {
-          lecturer: { select: { id: true, name: true } },
+          lecturer: { select: { id: true, name: true, signatureUrl: true } },
           modules: { include: { lessons: { include: { progress: { where: { userId: user.id } } } } } },
         },
       },
@@ -18,5 +18,11 @@ export async function GET() {
     },
     orderBy: { enrolledAt: 'desc' },
   })
-  return NextResponse.json({ enrollments })
+  // The administrator's uploaded signature belongs to the Director block on certificates.
+  const director = await db.user.findFirst({
+    where: { role: 'ADMIN', signatureUrl: { not: null } },
+    select: { name: true, signatureUrl: true },
+    orderBy: { updatedAt: 'desc' },
+  })
+  return NextResponse.json({ enrollments, director })
 }

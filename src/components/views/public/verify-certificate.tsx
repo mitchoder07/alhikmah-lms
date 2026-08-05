@@ -22,6 +22,9 @@ interface CertData {
   courseTitle: string
   creditUnit: number
   lecturerName: string
+  lecturerSignatureUrl: string | null
+  directorName: string
+  directorSignatureUrl: string | null
 }
 
 export function CertificateVerifyPage() {

@@ -60,6 +60,11 @@ interface Transcript {
   issuedBy?: {
     name: string
     signatureUrl: string | null
+    department: string
+  } | null
+  director?: {
+    name: string
+    signatureUrl: string | null
   } | null
 }
 
@@ -499,6 +504,10 @@ function buildPrintHtml(t: Transcript): string {
   // renders above the printed name. Falls back to "Chief Examiner" only if no
   // user info is available (e.g. older API response).
   const issuedByName = t.issuedBy?.name || 'Chief Examiner'
+  const directorName = t.director?.name || 'Director'
+  const directorSigHtml = t.director?.signatureUrl
+    ? `<img src="${t.director.signatureUrl}" alt="Director signature" style="max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
+    : ''
   const issuedBySigHtml = t.issuedBy?.signatureUrl
     ? `<img src="${t.issuedBy.signatureUrl}" alt="Signature" style="max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
     : ''
@@ -625,14 +634,14 @@ function buildPrintHtml(t: Transcript): string {
           <div class="sign-image">${issuedBySigHtml}</div>
           <div class="sign-line">
             <div class="sign-name">${escapeHtml(issuedByName)}</div>
-            <div class="sign-role">Dept. of Economics</div>
+            <div class="sign-role">${escapeHtml(t.issuedBy?.department || 'Dept. of Economics')}</div>
           </div>
         </div>
         <div class="sign-block">
-          <div class="sign-image"></div>
+          <div class="sign-image">${directorSigHtml}</div>
           <div class="sign-line">
-            <div class="sign-name">Director</div>
-            <div class="sign-role">Al-Bashir Academy</div>
+            <div class="sign-name">${escapeHtml(directorName)}</div>
+            <div class="sign-role">Director, Al-Bashir Academy</div>
           </div>
         </div>
       </div>

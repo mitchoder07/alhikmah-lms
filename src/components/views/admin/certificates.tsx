@@ -15,7 +15,7 @@ interface GradebookData {
     enrollments: Array<{
       id: string; finalScore: number | null; lecturerApproved: boolean; completedAt: string | null
       course: { id: string; code: string; title: string }
-      certificate: { certificateNumber: string } | null
+      certificate: { id: string; certificateNumber: string; issuedAt: string } | null
     }>
   }>
   courses: Array<{ id: string; code: string; title: string }>
@@ -36,6 +36,8 @@ export function AdminCertificates() {
       refetch()
     } catch (e: any) { toast.error(e.message) } finally { setIssuing(null) }
   }
+
+  const canRevoke = (issuedAt: string) => Date.now() <= new Date(issuedAt).getTime() + 30 * 24 * 60 * 60 * 1000
 
   const revoke = async (certId: string, studentName: string) => {
     if (!confirm(`Revoke certificate for ${studentName}? This will permanently delete the certificate. The student will need to repay to get a new one.`)) return
@@ -120,7 +122,7 @@ export function AdminCertificates() {
                   )}
                 </div>
                 {e.certificate && isAdmin && (
-                  <Button size="sm" variant="outline" onClick={() => revoke(e.certificate!.id, e.studentName)} disabled={issuing === e.certificate!.id} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <Button size="sm" variant="outline" onClick={() => revoke(e.certificate!.id, e.studentName)} disabled={issuing === e.certificate!.id || !canRevoke(e.certificate!.issuedAt)} title={!canRevoke(e.certificate!.issuedAt) ? 'Certificates cannot be revoked more than 30 days after issue.' : undefined} className="text-destructive border-destructive/30 hover:bg-destructive/10 disabled:opacity-50">
                     {issuing === e.certificate!.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban className="h-3 w-3 mr-1" />}
                     Revoke
                   </Button>

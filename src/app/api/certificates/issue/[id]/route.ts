@@ -13,6 +13,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const cert = await db.certificate.findUnique({ where: { id } })
   if (!cert) return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
 
+  const revocationDeadline = new Date(cert.issuedAt)
+  revocationDeadline.setDate(revocationDeadline.getDate() + 30)
+  if (new Date() > revocationDeadline) {
+    return NextResponse.json(
+      { error: 'Certificates can only be revoked within 30 days of issue.' },
+      { status: 403 },
+    )
+  }
+
   // Delete the certificate — the student will need to repay to get a new one
   await db.certificate.delete({ where: { id } })
 
