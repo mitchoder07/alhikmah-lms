@@ -253,6 +253,9 @@ model Payment {
   userId        String
   enrollmentId  String?
   courseId      String?
+  // For a bulk course-cart payment, this holds the comma-separated list of
+  // courseIds covered by the single transaction (courseId is null in that case).
+  bulkCourseIds String?
   amount        Float
   currency      String   @default("NGN")
   provider      String   @default("paystack") // paystack | flutterwave

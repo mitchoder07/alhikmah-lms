@@ -504,7 +504,9 @@ function buildPrintHtml(t: Transcript): string {
   // renders above the printed name. Falls back to "Chief Examiner" only if no
   // user info is available (e.g. older API response).
   const issuedByName = t.issuedBy?.name || 'Chief Examiner'
-  const directorName = t.director?.name || 'Director'
+  // The Director block is labelled "Director / Al-Bashir Academy" rather than
+  // the name of whichever admin's signature is uploaded.
+  const directorName = 'Director'
   const directorSigHtml = t.director?.signatureUrl
     ? `<img src="${t.director.signatureUrl}" alt="Director signature" style="max-height: 60px; max-width: 180px; object-fit: contain; margin-bottom: 4px;" />`
     : ''
@@ -641,7 +643,7 @@ function buildPrintHtml(t: Transcript): string {
           <div class="sign-image">${directorSigHtml}</div>
           <div class="sign-line">
             <div class="sign-name">${escapeHtml(directorName)}</div>
-            <div class="sign-role">Director, Al-Bashir Academy</div>
+            <div class="sign-role">Al-Bashir Academy</div>
           </div>
         </div>
       </div>

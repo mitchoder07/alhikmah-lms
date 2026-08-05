@@ -93,8 +93,12 @@ function AppProviderInner({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     const wasStaff = user?.role === 'ADMIN' || user?.role === 'LECTURER'
-    setUser(null)
-    // Use server-side redirect to guarantee cookie deletion
+    // Navigate straight to the server-side logout route, which clears the
+    // session cookie and redirects to the sign-in page. We intentionally do
+    // NOT call setUser(null) first — doing so re-renders the current page into
+    // the logged-out landing page for a frame before the redirect completes,
+    // which makes it look like the app bounces to the home page before the
+    // sign-in page.
     if (typeof window !== 'undefined') {
       window.location.href = `/logout?to=${wasStaff ? '/staff-login' : '/login'}`
     }

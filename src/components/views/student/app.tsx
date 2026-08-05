@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell, NavItem } from '@/components/lms/app-shell'
 import { LayoutDashboard, BookOpen, Award, Brain, Bell, User, ShoppingCart } from 'lucide-react'
 import { StudentDashboard } from './dashboard'
@@ -25,7 +26,10 @@ const navItems: NavItem[] = [
 ]
 
 export function StudentApp() {
-  const [view, setView] = useState('dashboard')
+  const sp = useSearchParams()
+  // Landing on /?view=course-cart&ref=... happens right after a gateway callback,
+  // so open the cart so it can verify the payment.
+  const [view, setView] = useState<string>(() => (sp.get('view') === 'course-cart' ? 'cart' : 'dashboard'))
   const [params, setParams] = useState<Record<string, any>>({})
 
   const navigate = (id: string, p: Record<string, any> = {}) => {
