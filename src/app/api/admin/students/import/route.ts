@@ -6,8 +6,8 @@ import { hashPassword } from '@/lib/auth'
 // Bulk import students from a list of { name, email, matric, phone }
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'LECTURER')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  if (!user || user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Only administrators can bulk import students' }, { status: 403 })
   }
   const body = await req.json()
   const { students } = body as { students: Array<{ name: string; email: string; matric?: string; phone?: string }> }
