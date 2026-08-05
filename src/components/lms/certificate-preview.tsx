@@ -173,8 +173,8 @@ export function CertificatePreview({
           <div class="sig-block">
             <div class="sig-image">${cert.directorSignatureUrl ? `<img src="${cert.directorSignatureUrl}" alt="Director signature" />` : ''}</div>
             <div class="sig-line">
-              <div class="sig-name">${cert.directorName}</div>
-              <div class="sig-role">Director, Al-Bashir Academy</div>
+              <div class="sig-name">Director</div>
+              <div class="sig-role">Al-Bashir Academy</div>
             </div>
           </div>
         </div>
@@ -268,7 +268,7 @@ export function CertificatePreview({
                 {loading ? <div className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-[#006633]" /></div> : <img src={qrUrl} alt="Verify QR" className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-200 p-1" />}
                 <p className="text-[8px] text-gray-500 mt-1">Scan to verify</p>
               </div>
-              <div className="text-center"><div className="h-14 flex items-end justify-center">{cert.directorSignatureUrl && <img src={cert.directorSignatureUrl} alt="Director signature" className="max-h-12 max-w-32 object-contain" />}</div><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">{cert.directorName}</p><p className="text-[10px] text-gray-500 font-semibold">Director, Al-Bashir Academy</p></div></div>
+              <div className="text-center"><div className="h-14 flex items-end justify-center">{cert.directorSignatureUrl && <img src={cert.directorSignatureUrl} alt="Director signature" className="max-h-12 max-w-32 object-contain" />}</div><div className="border-t border-gray-400 pt-1"><p className="text-xs font-semibold text-gray-700">Director</p><p className="text-[10px] text-gray-500 font-semibold">Al-Bashir Academy</p></div></div>
             </div>
 
             <div className="mt-8 pt-4 border-t border-[#D4AF37]/40 text-center">

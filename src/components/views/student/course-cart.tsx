@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -79,12 +80,14 @@ export function useCartIds() {
 }
 
 export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: any) => void }) {
+  const sp = useSearchParams()
   const { ids, remove, clear } = useCartIds()
   const { data: coursesData, loading } = useApi<{ courses: Course[] }>('/api/courses')
   const [discount, setDiscount] = useState<BulkDiscountResponse | null>(null)
   const [calculating, setCalculating] = useState(false)
   const [paying, setPaying] = useState(false)
   const [success, setSuccess] = useState(false)
+  const verifiedCallbackRef = useRef(false)
 
   const allCourses = coursesData?.courses ?? []
   const cartCourses = allCourses.filter((c) => ids.includes(c.id) && c.isPaid)
@@ -118,84 +121,61 @@ export function StudentCourseCart({ onNavigate }: { onNavigate: (v: string, p?: 
     return () => { cancelled = true }
   }, [cartKey])
 
+  // After returning from the Paystack/Flutterwave gateway the callback URL is
+  // /?view=course-cart&ref=<reference>. Verify that payment on load so the cart
+  // is cleared and access is granted without the student having to do anything.
+  useEffect(() => {
+    let cancelled = false
+    const reference = sp.get('ref')
+    if (!reference || verifiedCallbackRef.current) return
+    verifiedCallbackRef.current = true
+    apiPost('/api/courses/bulk-access/verify', { reference, status: 'success' })
+      .then((vres) => {
+        if (cancelled) return
+        if (vres.status === 'success') {
+          toast.success(`Payment verified! Access granted to ${vres.grantedCount ?? 'your'} course(s).`)
+          clear()
+          setSuccess(true)
+        } else {
+          toast.error('Payment could not be verified. Please try again.')
+        }
+      })
+      .catch((e: any) => {
+        if (!cancelled) toast.error(e.message || 'Failed to verify payment')
+      })
+    return () => { cancelled = true }
+  }, [sp, clear, setSuccess])
+
   const payForAll = async () => {
     if (cartCourses.length === 0) return
     setPaying(true)
     try {
-      // Initiate payment for each course sequentially.
-      // Skip courses the user already has active access to (the backend returns
-      // 400 "You already have active access" — we treat that as a success for
-      // the cart flow, since the goal is to grant access, which already exists).
-      const references: Array<{ courseId: string; reference: string; demo: boolean; authorization_url?: string; alreadyOwned: boolean }> = []
-      for (const course of cartCourses) {
-        try {
-          const res = await apiPost(`/api/courses/${course.id}/access`, { provider: 'paystack' })
-          references.push({
-            courseId: course.id,
-            reference: res.reference,
-            demo: !!res.demo,
-            authorization_url: res.authorization_url,
-            alreadyOwned: false,
-          })
-        } catch (e: any) {
-          // If the user already has access, treat as success — skip payment for this one
-          if (e?.message && e.message.toLowerCase().includes('already have active access')) {
-            references.push({
-              courseId: course.id,
-              reference: '',
-              demo: true,
-              authorization_url: undefined,
-              alreadyOwned: true,
-            })
-          } else {
-            // Any other error (course not found, etc.) — re-throw to abort
-            throw e
-          }
-        }
-      }
+      // Initiate a SINGLE Paystack/Flutterwave payment for the whole cart so the
+      // amount charged on the gateway checkout exactly matches the discounted
+      // total shown in the order summary. The backend filters out courses the
+      // user already has access to and applies the bulk discount tier.
+      const res = await apiPost('/api/courses/bulk-access', {
+        courseIds: cartCourses.map((c) => c.id),
+        provider: 'paystack',
+      })
 
-      // Real gateway mode: if any course returned a real Paystack/Flutterwave URL,
-      // redirect to the first one. The remaining courses stay in the cart so the
-      // student can pay for them after returning from the gateway.
-      const realRedirect = references.find((r) => !r.demo && !r.alreadyOwned && r.authorization_url?.startsWith('http'))
-      if (realRedirect) {
-        window.location.href = realRedirect.authorization_url!
+      // Real gateway mode: redirect to the checkout for the full cart total.
+      if (res.authorization_url && res.authorization_url.startsWith('http')) {
+        window.location.href = res.authorization_url
         return
       }
 
-      // Demo mode — verify each non-already-owned payment as success
-      const failed: string[] = []
-      const succeeded: string[] = []
-      for (const r of references) {
-        if (r.alreadyOwned) {
-          succeeded.push(r.courseId)
-          continue
-        }
-        try {
-          const vres = await apiPost(`/api/courses/${r.courseId}/access/verify`, {
-            reference: r.reference,
-            status: 'success',
-          })
-          if (vres.status === 'success') {
-            succeeded.push(r.courseId)
-          } else {
-            failed.push(r.courseId)
-          }
-        } catch {
-          failed.push(r.courseId)
-        }
-      }
-
-      if (failed.length > 0 && succeeded.length === 0) {
-        toast.error(`${failed.length} payment(s) failed to verify. Please try again.`)
-      } else if (failed.length > 0) {
-        toast.success(`Paid for ${succeeded.length} course(s). ${failed.length} failed — try again for those.`)
+      // Demo mode — verify and grant access for the whole cart.
+      const vres = await apiPost('/api/courses/bulk-access/verify', {
+        reference: res.reference,
+        status: 'success',
+      })
+      if (vres.status === 'success') {
+        toast.success(`Payment successful! Access granted to ${vres.grantedCount ?? cartCourses.length} course(s).`)
         clear()
         setSuccess(true)
       } else {
-        toast.success(`Successfully paid for ${succeeded.length} course(s)!`)
-        clear()
-        setSuccess(true)
+        toast.error('Payment could not be verified. Please try again.')
       }
     } catch (e: any) {
       toast.error(e.message || 'Payment initiation failed')
