@@ -5,7 +5,7 @@ import { getAiConfig } from '@/lib/ai'
 
 // AI provider configuration for the staff AI (question generation, essay
 // marking, lecturer assistant). Only ADMIN can read or change it.
-// The stored key is never returned in full — only its last 4 characters.
+// The stored key is never returned in full, only its last 4 characters.
 
 function maskKey(key: string) {
   if (!key) return ''
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const existing = await db.aiSetting.findUnique({ where: { id: 'default' } })
 
-  // An empty apiKey field means "keep what is stored" — clearing it is explicit
+  // An empty apiKey field means "keep what is stored". Clearing it is explicit
   // via apiKey: null.
   const nextKey =
     apiKey === undefined

@@ -28,7 +28,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   })
   if (!course) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Never ship answers or essay marking guides to the student client — grading
+  // Never ship answers or essay marking guides to the student client, because grading
   // happens on the server against the stored values.
   const safeCourse = {
     ...course,

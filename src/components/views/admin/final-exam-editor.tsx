@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Trash2, FileCheck, Save, Sparkles } from 'lucide-react'
+import { Loader2, Trash2, FileCheck, Save, Brain } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   QuestionCard, emptyQuestion, toEditorQuestion, toApiQuestion, validateQuestions,
@@ -68,7 +68,7 @@ function FinalExamForm({
   initialDraft?: AssessmentDraft | null
   onClose: () => void
 }) {
-  // An AI draft takes priority over the stored exam — the lecturer asked for it
+  // An AI draft takes priority over the stored exam, because the lecturer asked for it
   const draft = initialDraft?.questions?.length ? initialDraft : null
   const [title, setTitle] = useState(draft?.title || existing?.title || 'Final Exam')
   const [description, setDescription] = useState(draft?.description ?? existing?.description ?? '')
@@ -140,16 +140,16 @@ function FinalExamForm({
             <FileCheck className="h-5 w-5 text-primary" /> Final Exam Builder
           </DialogTitle>
           <DialogDescription>
-            Students must pass this exam to qualify for the certificate. Mix multiple choice with essay questions —
-            essays are marked by the AI and released only after you approve them.
+            Students must pass this exam to qualify for the certificate. Mix multiple choice with essay questions.
+            Essays are marked by the AI and released only after you approve them.
           </DialogDescription>
         </DialogHeader>
 
         {draft ? (
           <div className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-xs flex items-start gap-2">
-            <Sparkles className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+            <Brain className="h-4 w-4 text-gold mt-0.5 shrink-0" />
             <p>
-              <strong>AI draft loaded — {draft.questions.length} questions.</strong> Check every question and
+              <strong>AI draft loaded: {draft.questions.length} questions.</strong> Check every question and
               marking guide below before saving. Nothing reaches students until you do.
             </p>
           </div>

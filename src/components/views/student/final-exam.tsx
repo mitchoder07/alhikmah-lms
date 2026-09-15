@@ -296,7 +296,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
                       ) : a.passed ? <Badge className="bg-green-100 text-green-700">Passed</Badge> : <Badge variant="secondary" className="text-destructive">Failed</Badge>}
                     </div>
                     <span className="text-sm font-medium">
-                      {a.reviewStatus === 'PENDING' ? '—' : `${Math.round((a.score / a.totalMarks) * 100)}%`}
+                      {a.reviewStatus === 'PENDING' ? 'Under review' : `${Math.round((a.score / a.totalMarks) * 100)}%`}
                     </span>
                   </div>
                 ))}
@@ -353,7 +353,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
       const res = await apiPost(`/api/courses/${courseId}/final-exam`, { answers })
       setResult(res)
       if (res.awaitingReview) {
-        toast.success('Exam submitted — your written answers are being marked')
+        toast.success('Exam submitted. Your written answers are being marked.')
       } else if (res.passed) {
         toast.success(`Congratulations! You passed with ${res.percent}%`)
       } else {
@@ -405,7 +405,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
                   onChange={(e) => setAnswers((p) => ({ ...p, [q.id]: e.target.value }))}
                   rows={6}
                   className="text-sm"
-                  placeholder="Write your answer here. Set out your reasoning clearly — the marks follow the points you make."
+                  placeholder="Write your answer here. Set out your reasoning clearly. The marks follow the points you make."
                 />
               ) : (
               <RadioGroup

@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 // Generates a draft quiz or final exam from a lecturer's own documents (and the
-// course's lesson content). Nothing is published here — the draft goes back to
+// course's lesson content). Nothing is published here. The draft goes back to
 // the quiz / final-exam builder so the lecturer can edit it before saving.
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     })
     lessonContext = buildSourceContext(
       lessons.map((l) => ({
-        title: `${l.module.title} — ${l.title}`,
+        title: `${l.module.title}: ${l.title}`,
         content: `${l.title}\n${l.content || ''}`,
       })),
       20000
@@ -148,18 +148,18 @@ export async function POST(req: NextRequest) {
     `Difficulty: ${difficulty}. Use Nigerian and African examples where they help.`,
     `Produce EXACTLY ${count} question(s): ${mcqCount} multiple-choice (type "MCQ") and ${essayCount} written/essay (type "ESSAY"), in that order.`,
     'Rules for MCQ: exactly 4 plausible options of similar length, only one defensibly correct, no "all of the above", no trick wording. answerIndex is the zero-based position of the correct option.',
-    'Rules for ESSAY: ask for explanation, application or evaluation — something that needs written reasoning. Always supply "rubric": a concise point-by-point marking guide naming the concepts, figures or steps that earn the marks, and roughly how the marks split.',
+    'Rules for ESSAY: ask for explanation, application or evaluation, something that needs written reasoning. Always supply "rubric": a concise point-by-point marking guide naming the concepts, figures or steps that earn the marks, and roughly how the marks split.',
     'Never include the answer inside an essay question. Do not reuse the same fact for two questions.',
     'Reply with JSON only, matching this shape exactly:',
     shape,
   ].join('\n')
 
   const userPrompt = [
-    `Course: ${course.title} (${course.code}) — level ${course.level}, ${course.semester} semester.`,
+    `Course: ${course.title} (${course.code}), level ${course.level}, ${course.semester} semester.`,
     `Course description: ${course.description}`,
     body.topic ? `Focus the questions on: ${body.topic}` : '',
     body.instructions ? `Additional instructions from the lecturer: ${body.instructions}` : '',
-    promptContext ? `SOURCE MATERIAL — every question must be answerable from this:\n\n${promptContext}` : 'No source material was supplied; draw on standard Economics at this level.',
+    promptContext ? `SOURCE MATERIAL. Every question must be answerable from this:\n\n${promptContext}` : 'No source material was supplied; draw on standard Economics at this level.',
   ]
     .filter(Boolean)
     .join('\n\n')
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
     marksPerMcq,
     marksPerEssay,
     passMark: course.passMark,
-    fallbackTitle: target === 'exam' ? `${course.code} Final Exam` : `Quiz — ${lesson?.title || course.title}`,
+    fallbackTitle: target === 'exam' ? `${course.code} Final Exam` : `Quiz: ${lesson?.title || course.title}`,
   })
 
   if (!draft.questions.length) {

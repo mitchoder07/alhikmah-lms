@@ -98,3 +98,17 @@ export async function apiDelete(url: string) {
 export function formatNaira(amount: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount)
 }
+
+/**
+ * A route can die before it writes a body, which leaves the client holding an empty
+ * response. Turn that into something a person can act on instead of a JSON parse error.
+ */
+export function readableHttpError(status: number, bodyText?: string): string {
+  if (status === 413) return 'That file is too large for the server. Try a smaller one.'
+  if (status === 429) return 'Too many requests. Give it a minute and try again.'
+  if (status >= 500) {
+    return 'The server hit a problem while handling that. Please try again, and check the server logs if it keeps happening.'
+  }
+  const snippet = (bodyText || '').replace(/\s+/g, ' ').trim().slice(0, 160)
+  return snippet || `Request failed (HTTP ${status})`
+}

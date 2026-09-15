@@ -3,8 +3,8 @@ import { getStaffUser } from '@/lib/auth'
 import { loadAttempt, gradeObjective, parseGraded, applyLecturerReview, type AttemptKind } from '@/lib/grading'
 import { canReviewAttempt } from '@/lib/assessment-access'
 
-// GET  — everything a lecturer needs to check the AI's marking question by question
-// PATCH — save the lecturer's marks (release the result to the student)
+// GET: everything a lecturer needs to check the AI's marking question by question
+// PATCH: save the lecturer's marks (release the result to the student)
 
 async function loadAuthorized(req: NextRequest, id: string) {
   const user = await getStaffUser()
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if ('error' in auth) return auth.error
   const { kind, loaded } = auth
 
-  // Older attempts (created before AI marking) have no stored detail — rebuild it
+  // Older attempts (created before AI marking) have no stored detail, so rebuild it
   const items =
     parseGraded(loaded.attempt.graded) ??
     gradeObjective(loaded.questions, loaded.attempt.answers).items

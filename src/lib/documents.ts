@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Server-side text extraction for documents a lecturer/admin uploads to the AI.
 // PDF and DOCX are parsed here; plain text and markdown are read as UTF-8.
-// Only the extracted text is persisted (AiDocument.content) — this repo has no
+// Only the extracted text is persisted (AiDocument.content). This repo has no
 // object storage service, and text is all the model needs.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ export async function extractDocumentText(
   // Strip null bytes / control characters that break JSON payloads and prompts
   const cleaned = raw.replace(/\u0000/g, '').replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, ' ').trim()
   if (!cleaned) {
-    throw new DocumentError(`No readable text found in "${filename}". Scanned/image-only PDFs cannot be read — upload a text-based PDF or paste the text.`)
+    throw new DocumentError(`No readable text found in "${filename}". Scanned/image-only PDFs cannot be read. Upload a text-based PDF or paste the text.`)
   }
 
   return {

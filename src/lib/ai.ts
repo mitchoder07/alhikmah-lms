@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 // generation, essay marking and the lecturer assistant chat.
 //
 // Configuration order:
-//   1. AiSetting row (id = "default") — set by an admin in the portal
+//   1. AiSetting row (id = "default"), set by an admin in the portal
 //   2. OPENAI_API_KEY / AI_API_KEY, AI_API_BASE_URL, AI_MODEL environment vars
 // The endpoint is OpenAI-compatible, so OpenAI, Groq, Together, OpenRouter etc.
 // all work by changing apiBase + model.
@@ -17,7 +17,7 @@ export interface AiConfig {
   apiKey: string
   temperature: number
   maxTokens: number
-  /** where the active API key came from — shown in the settings UI */
+  /** where the active API key came from, shown in the settings UI */
   keySource: 'settings' | 'env' | 'none'
 }
 
@@ -117,7 +117,7 @@ export async function aiChat(messages: AiMessage[], opts: ChatOptions = {}): Pro
 
 /**
  * Completion that must return JSON. Uses the provider's JSON mode when asked and
- * then parses defensively — models occasionally wrap JSON in ```json fences or
+ * then parses defensively, because models occasionally wrap JSON in ```json fences or
  * add a preamble, and a failed mark should never lose a student's submission.
  */
 export async function aiChatJson<T>(messages: AiMessage[], opts: ChatOptions = {}): Promise<T> {

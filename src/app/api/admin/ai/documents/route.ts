@@ -74,30 +74,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not read that file. Please try another format.' }, { status: 500 })
   }
 
-  const doc = await db.aiDocument.create({
-    data: {
-      ownerId: user.id,
-      courseId,
-      title: titleOverride || file.name.replace(/\.[^.]+$/, ''),
-      filename: file.name,
-      fileType: extracted.type,
-      fileSize: file.size,
-      content: extracted.content,
-      charCount: extracted.charCount,
-    },
-    select: {
-      id: true,
-      title: true,
-      filename: true,
-      fileType: true,
-      fileSize: true,
-      charCount: true,
-      courseId: true,
-      createdAt: true,
-      course: { select: { id: true, code: true, title: true } },
-      owner: { select: { id: true, name: true } },
-    },
-  })
+  // Never let an unexpected failure reach the client as an empty body, which shows up
+  // in the browser as a JSON parse error instead of a message the lecturer can act on.
+  try {
+    const doc = await db.aiDocument.create({
+      data: {
+        ownerId: user.id,
+        courseId,
+        title: titleOverride || file.name.replace(/\.[^.]+$/, ''),
+        filename: file.name,
+        fileType: extracted.type,
+        fileSize: file.size,
+        content: extracted.content,
+        charCount: extracted.charCount,
+      },
+      select: {
+        id: true,
+        title: true,
+        filename: true,
+        fileType: true,
+        fileSize: true,
+        charCount: true,
+        courseId: true,
+        createdAt: true,
+        course: { select: { id: true, code: true, title: true } },
+        owner: { select: { id: true, name: true } },
+      },
+    })
 
-  return NextResponse.json({ document: doc, truncated: extracted.truncated })
+    return NextResponse.json({ document: doc, truncated: extracted.truncated })
+  } catch (e) {
+    console.error('[ai/documents] save error:', e)
+    return NextResponse.json(
+      { error: 'The file was read but could not be saved. Please try again.' },
+      { status: 500 },
+    )
+  }
 }

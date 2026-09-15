@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Award, CheckCircle2, Loader2, Pencil, Info, Check, ClipboardCheck, Sparkles, FileSearch } from 'lucide-react'
+import { Award, CheckCircle2, Loader2, Pencil, Info, Check, ClipboardCheck, Brain, FileSearch } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { AttemptReviewDialog, StatusBadge } from './attempt-review'
@@ -105,7 +105,7 @@ export function AdminGradebook() {
                 <p><Badge variant="secondary" className="text-[9px] mr-1">82%</Badge> Final score you assigned via Finalize</p>
                 <p><Badge variant="secondary" className="text-[9px] bg-gold/20 text-gold mr-1"><Award className="h-2 w-2 mr-0.5" />Cert</Badge> Certificate issued</p>
               </div>
-              <p className="pt-1"><Badge variant="secondary" className="text-[9px] mr-1 text-amber-700"><Sparkles className="h-2 w-2 mr-0.5" />AI</Badge> Essay answer marked by the AI — click the score to check and adjust it before it is released to the student</p>
+              <p className="pt-1"><Badge variant="secondary" className="text-[9px] mr-1 text-amber-700"><Brain className="h-2 w-2 mr-0.5" />AI</Badge> Essay answer marked by the AI. Click the score to check and adjust it before it is released to the student.</p>
               <p><strong>Finalize</strong> = assign a final score + approve for certification</p>
               <p><strong>Edit</strong> = change an already-assigned score</p>
               <p><strong>Approve</strong> = approve a student without assigning a score yet</p>
@@ -132,7 +132,7 @@ export function AdminGradebook() {
           ) : pending.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              Nothing waiting — {aiMarked.length} submission{aiMarked.length === 1 ? '' : 's'} already reviewed.
+              Nothing waiting. {aiMarked.length} submission{aiMarked.length === 1 ? '' : 's'} already reviewed.
             </p>
           ) : (
             <div className="divide-y max-h-[320px] overflow-y-auto">
@@ -141,7 +141,7 @@ export function AdminGradebook() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{a.student.name} <span className="text-muted-foreground font-normal">· {a.course.code}</span></p>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {a.kind === 'exam' ? 'Final exam' : 'Quiz'}: {a.title}{a.lessonTitle ? ` — ${a.lessonTitle}` : ''}
+                      {a.kind === 'exam' ? 'Final exam' : 'Quiz'}: {a.title}{a.lessonTitle ? `: ${a.lessonTitle}` : ''}
                       {' · submitted '}{new Date(a.submittedAt).toLocaleString()}
                     </p>
                   </div>
@@ -229,10 +229,10 @@ export function AdminGradebook() {
                             <button
                               onClick={() => setReview({ attemptId: needsReview.id, kind: needsReview.kind })}
                               className="flex flex-col items-center gap-1"
-                              title="AI has marked this — check and release it"
+                              title="AI has marked this. Check and release it."
                             >
                               <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-[10px]">
-                                <Sparkles className="h-2.5 w-2.5 mr-0.5" />Review
+                                <Brain className="h-2.5 w-2.5 mr-0.5" />Review
                               </Badge>
                               <span className="text-[9px] text-muted-foreground">held for you</span>
                             </button>
@@ -240,7 +240,7 @@ export function AdminGradebook() {
                             <button onClick={() => setStudentAttempts({ studentId: s.id, name: s.name })} className="flex flex-col items-center gap-1">
                               <Badge variant="outline" className="text-[10px]">{avgScore}%</Badge>
                               <span className="text-[9px] text-muted-foreground">
-                                {latestAi ? <span className="inline-flex items-center gap-0.5 text-primary"><Sparkles className="h-2 w-2" />AI marked</span> : 'quiz avg'}
+                                {latestAi ? <span className="inline-flex items-center gap-0.5 text-primary"><Brain className="h-2 w-2" />AI marked</span> : 'quiz avg'}
                               </span>
                             </button>
                           ) : (
@@ -291,7 +291,7 @@ export function AdminGradebook() {
       <Dialog open={!!studentAttempts} onOpenChange={(o) => !o && setStudentAttempts(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submissions — {studentAttempts?.name}</DialogTitle>
+            <DialogTitle>Submissions: {studentAttempts?.name}</DialogTitle>
             <DialogDescription>Every quiz and final exam attempt, with how it was marked.</DialogDescription>
           </DialogHeader>
           {(() => {
@@ -306,7 +306,7 @@ export function AdminGradebook() {
                         {a.kind === 'exam' ? 'Final exam' : 'Quiz'}: {a.title}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        {a.course.code}{a.lessonTitle ? ` — ${a.lessonTitle}` : ''} · {new Date(a.submittedAt).toLocaleDateString()}
+                        {a.course.code}{a.lessonTitle ? `: ${a.lessonTitle}` : ''} · {new Date(a.submittedAt).toLocaleDateString()}
                         {a.gradingMode === 'AI' && ' · AI marked'}
                       </p>
                     </div>

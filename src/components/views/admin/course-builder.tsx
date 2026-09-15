@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { ChevronLeft, Plus, Trash2, FileText, Video, File, Download, Pencil, GripVertical, Play, Loader2, X, Upload, PlusCircle, Radio, FileCheck, Sparkles } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2, FileText, Video, File, Download, Pencil, GripVertical, Play, Loader2, X, Upload, PlusCircle, Radio, FileCheck, Brain } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { FinalExamEditor } from './final-exam-editor'
@@ -490,7 +490,7 @@ function QuizEditor({
   /** questions drafted by the AI assistant, pre-filled for review */
   initialDraft?: AssessmentDraft | null
 }) {
-  // An AI draft, when present, is the starting point — nothing to fetch
+  // An AI draft, when present, is the starting point, so there is nothing to fetch
   const draft = initialDraft?.questions?.length ? initialDraft : null
   const [title, setTitle] = useState(draft?.title || '')
   const [passMark, setPassMark] = useState(String(draft?.passMark ?? 50))
@@ -569,9 +569,9 @@ function QuizEditor({
             <>
           {draft ? (
             <div className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-xs flex items-start gap-2">
-              <Sparkles className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+              <Brain className="h-4 w-4 text-gold mt-0.5 shrink-0" />
               <p>
-                <strong>AI draft loaded — {draft.questions.length} questions.</strong> Check every question and
+                <strong>AI draft loaded: {draft.questions.length} questions.</strong> Check every question and
                 marking guide before saving. Nothing reaches students until you do.
               </p>
             </div>
