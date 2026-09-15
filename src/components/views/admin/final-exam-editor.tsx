@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useApi, apiPost, apiDelete } from '@/lib/api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -8,9 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Plus, Trash2, FileCheck, X, Save } from 'lucide-react'
+import { Loader2, Trash2, FileCheck, Save, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { ImageUpload } from '@/components/lms/image-upload'
+import {
+  QuestionCard, emptyQuestion, toEditorQuestion, toApiQuestion, validateQuestions,
+  type EditorQuestion,
+} from './question-editor'
+import type { AssessmentDraft } from './ai-assistant'
 
 export function FinalExamButton({ courseId }: { courseId: string }) {
   const [open, setOpen] = useState(false)
@@ -24,62 +28,75 @@ export function FinalExamButton({ courseId }: { courseId: string }) {
   )
 }
 
-function FinalExamEditor({ courseId, onClose }: { courseId: string; onClose: () => void }) {
+export function FinalExamEditor({
+  courseId, onClose, initialDraft,
+}: {
+  courseId: string
+  onClose: () => void
+  /** questions drafted by the AI assistant, pre-filled for review */
+  initialDraft?: AssessmentDraft | null
+}) {
   const { data, loading } = useApi<{ exam: any }>(`/api/admin/courses/${courseId}/final-exam`)
-  const [title, setTitle] = useState('Final Exam')
-  const [description, setDescription] = useState('')
-  const [passMark, setPassMark] = useState('50')
-  const [timeLimit, setTimeLimit] = useState('0')
-  const [maxAttempts, setMaxAttempts] = useState('3')
-  const [questions, setQuestions] = useState<Array<{ text: string; options: string[]; answer: number; marks?: number; imageUrl?: string }>>([
-    { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }
-  ])
+
+  if (loading) {
+    return (
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl">
+          <div className="flex items-center justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  return (
+    <FinalExamForm
+      // Remount so the stored exam / AI draft is picked up as initial state
+      key={data?.exam?.id ?? 'new'}
+      courseId={courseId}
+      existing={data?.exam ?? null}
+      initialDraft={initialDraft}
+      onClose={onClose}
+    />
+  )
+}
+
+function FinalExamForm({
+  courseId, existing, initialDraft, onClose,
+}: {
+  courseId: string
+  existing: any | null
+  initialDraft?: AssessmentDraft | null
+  onClose: () => void
+}) {
+  // An AI draft takes priority over the stored exam — the lecturer asked for it
+  const draft = initialDraft?.questions?.length ? initialDraft : null
+  const [title, setTitle] = useState(draft?.title || existing?.title || 'Final Exam')
+  const [description, setDescription] = useState(draft?.description ?? existing?.description ?? '')
+  const [passMark, setPassMark] = useState(String(draft?.passMark ?? existing?.passMark ?? 50))
+  const [timeLimit, setTimeLimit] = useState(String(existing?.timeLimit ?? 0))
+  const [maxAttempts, setMaxAttempts] = useState(String(existing?.maxAttempts ?? 3))
+  const [questions, setQuestions] = useState<EditorQuestion[]>(
+    draft
+      ? draft.questions.map(toEditorQuestion)
+      : existing?.questions?.length
+        ? existing.questions.map(toEditorQuestion)
+        : [emptyQuestion('MCQ')]
+  )
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (data?.exam) {
-      setTitle(data.exam.title || 'Final Exam')
-      setDescription(data.exam.description || '')
-      setPassMark(String(data.exam.passMark || 50))
-      setTimeLimit(String(data.exam.timeLimit || 0))
-      setMaxAttempts(String(data.exam.maxAttempts || 3))
-      if (data.exam.questions?.length > 0) {
-        setQuestions(data.exam.questions.map((q: any) => ({
-          text: q.text,
-          options: q.options,
-          answer: Number(q.answer),
-          marks: q.marks,
-          imageUrl: q.imageUrl || '',
-        })))
-      }
-    }
-  }, [data])
+  const updateQ = (i: number, next: EditorQuestion) =>
+    setQuestions((prev) => prev.map((q, idx) => (idx === i ? next : q)))
 
-  const updateQ = (i: number, field: 'text' | 'options' | 'answer' | 'marks' | 'imageUrl', val: any) => {
-    setQuestions(prev => prev.map((q, idx) => {
-      if (idx !== i) return q
-      if (field === 'options') {
-        const opts = [...q.options]
-        opts[val.idx] = val.value
-        return { ...q, options: opts }
-      }
-      return { ...q, [field]: val }
-    }))
-  }
-
-  const addQ = () => setQuestions([...questions, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }])
-  const insertQ = (i: number) => {
+  const insertQ = (i: number, type: 'MCQ' | 'ESSAY') => {
     const next = [...questions]
-    next.splice(i + 1, 0, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' })
+    next.splice(i + 1, 0, emptyQuestion(type))
     setQuestions(next)
   }
-  const removeQ = (i: number) => setQuestions(questions.filter((_, idx) => idx !== i))
 
   const save = async () => {
-    if (!title || questions.some(q => !q.text || q.options.some(o => !o))) {
-      toast.error('Please fill all questions and options')
-      return
-    }
+    const problem = validateQuestions(questions)
+    if (problem) return toast.error(problem)
+
     setSaving(true)
     try {
       await apiPost(`/api/admin/courses/${courseId}/final-exam`, {
@@ -88,13 +105,7 @@ function FinalExamEditor({ courseId, onClose }: { courseId: string; onClose: () 
         passMark: Number(passMark),
         timeLimit: Number(timeLimit),
         maxAttempts: Number(maxAttempts),
-        questions: questions.map(q => ({
-          text: q.text,
-          options: q.options,
-          answer: q.answer,
-          marks: q.marks,
-          imageUrl: q.imageUrl || null,
-        })),
+        questions: questions.map(toApiQuestion),
       })
       toast.success('Final exam saved')
       onClose()
@@ -119,6 +130,8 @@ function FinalExamEditor({ courseId, onClose }: { courseId: string; onClose: () 
     }
   }
 
+  const essayCount = questions.filter((q) => q.type === 'ESSAY').length
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -126,14 +139,23 @@ function FinalExamEditor({ courseId, onClose }: { courseId: string; onClose: () 
           <DialogTitle className="flex items-center gap-2">
             <FileCheck className="h-5 w-5 text-primary" /> Final Exam Builder
           </DialogTitle>
-          <DialogDescription>Students must pass this exam to qualify for the certificate. Set a pass mark and add questions.</DialogDescription>
+          <DialogDescription>
+            Students must pass this exam to qualify for the certificate. Mix multiple choice with essay questions —
+            essays are marked by the AI and released only after you approve them.
+          </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-        ) : (
-          <div className="space-y-4">
-            {/* Settings */}
+        {draft ? (
+          <div className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-xs flex items-start gap-2">
+            <Sparkles className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+            <p>
+              <strong>AI draft loaded — {draft.questions.length} questions.</strong> Check every question and
+              marking guide below before saving. Nothing reaches students until you do.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5 col-span-2">
                 <Label>Exam Title</Label>
@@ -151,64 +173,51 @@ function FinalExamEditor({ courseId, onClose }: { courseId: string; onClose: () 
                 <Label>Max Attempts</Label>
                 <Input type="number" value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Time Limit (minutes, 0 = none)</Label>
+                <Input type="number" value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} />
+              </div>
             </div>
 
-            {/* Questions */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Questions ({questions.length})</Label>
-                <Button size="sm" variant="outline" onClick={addQ}><Plus className="h-3 w-3 mr-1" /> Add Question</Button>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <Label className="text-sm font-semibold">
+                  Questions ({questions.length})
+                  {essayCount > 0 && <Badge variant="secondary" className="ml-2 text-[10px]">{essayCount} essay</Badge>}
+                </Label>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setQuestions([...questions, emptyQuestion('MCQ')])}>
+                    + Multiple choice
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setQuestions([...questions, emptyQuestion('ESSAY')])}>
+                    + Essay
+                  </Button>
+                </div>
               </div>
 
               {questions.map((q, i) => (
-                <div key={i} className="border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">Q{i + 1}</Badge>
-                    {questions.length > 1 && (
-                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeQ(i)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <Input value={q.text} onChange={(e) => updateQ(i, 'text', e.target.value)} placeholder="Question text" />
-                  <ImageUpload
-                    value={q.imageUrl || null}
-                    onChange={(url) => updateQ(i, 'imageUrl', url ?? '')}
-                    label="Question Image (optional)"
-                  />
-                  <div className="space-y-1">
-                    {q.options.map((opt, oi) => (
-                      <div key={oi} className="flex items-center gap-2">
-                        <input type="radio" name={`answer-${i}`} checked={q.answer === oi} onChange={() => updateQ(i, 'answer', oi)} className="h-3 w-3" />
-                        <Input value={opt} onChange={(e) => updateQ(i, 'options', { idx: oi, value: e.target.value })} placeholder={`Option ${oi + 1}`} className="text-xs h-8" />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Select the radio button next to the correct answer.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs"
-                    onClick={() => insertQ(i)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Question Below
-                  </Button>
-                </div>
+                <QuestionCard
+                  key={i}
+                  q={q}
+                  index={i}
+                  radioGroup={`exam-answer-${i}`}
+                  canRemove={questions.length > 1}
+                  onChange={(next) => updateQ(i, next)}
+                  onRemove={() => setQuestions(questions.filter((_, idx) => idx !== i))}
+                  onInsertBelow={(type) => insertQ(i, type)}
+                />
               ))}
-
-              <Button variant="outline" size="sm" onClick={addQ} className="w-full"><Plus className="h-3 w-3 mr-1" /> Add Question</Button>
             </div>
-          </div>
-        )}
+        </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          {data?.exam && (
+          {existing && (
             <Button variant="ghost" onClick={remove} disabled={saving} className="text-destructive sm:mr-auto">
               <Trash2 className="h-4 w-4 mr-1" /> Delete Exam
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving || loading} className="bg-primary hover:bg-primary/90">
+          <Button onClick={save} disabled={saving} className="bg-primary hover:bg-primary/90">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
             Save Final Exam
           </Button>

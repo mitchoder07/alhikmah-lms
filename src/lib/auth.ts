@@ -68,6 +68,15 @@ export async function getCurrentUser() {
   }
 }
 
+export type StaffUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+
+/** Current user when they are ADMIN or LECTURER, otherwise null. */
+export async function getStaffUser(): Promise<StaffUser | null> {
+  const user = await getCurrentUser()
+  if (!user) return null
+  return user.role === 'ADMIN' || user.role === 'LECTURER' ? user : null
+}
+
 export function hashPassword(password: string) {
   return crypto.createHash('sha256').update(password).digest('hex')
 }

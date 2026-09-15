@@ -9,11 +9,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { ChevronLeft, Plus, Trash2, FileText, Video, File, Download, Pencil, GripVertical, Play, Loader2, X, Upload, PlusCircle, Radio } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2, FileText, Video, File, Download, Pencil, GripVertical, Play, Loader2, X, Upload, PlusCircle, Radio, FileCheck, Sparkles } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { FinalExamButton } from './final-exam-editor'
+import { FinalExamEditor } from './final-exam-editor'
 import { ImageUpload } from '@/components/lms/image-upload'
+import {
+  QuestionCard, emptyQuestion, toEditorQuestion, toApiQuestion, validateQuestions,
+  type EditorQuestion,
+} from './question-editor'
+import type { AssessmentDraft } from './ai-assistant'
 
 interface CourseData {
   course: {
@@ -31,14 +36,31 @@ interface CourseData {
   }
 }
 
-export function AdminCourseBuilder({ courseId, onNavigate }: { courseId: string; onNavigate: (v: string, p?: any) => void }) {
+export function AdminCourseBuilder({
+  courseId, onNavigate, openQuizLessonId, quizDraft, openFinalExam, examDraft,
+}: {
+  courseId: string
+  onNavigate: (v: string, p?: any) => void
+  /** set when arriving from the AI assistant with a drafted quiz */
+  openQuizLessonId?: string | null
+  quizDraft?: AssessmentDraft | null
+  /** set when arriving from the AI assistant with a drafted final exam */
+  openFinalExam?: boolean
+  examDraft?: AssessmentDraft | null
+}) {
   const { data, loading, refetch } = useApi<CourseData>(`/api/courses/${courseId}`)
   const course = data?.course
 
   const [moduleOpen, setModuleOpen] = useState(false)
   const [moduleForm, setModuleForm] = useState({ title: '', description: '' })
   const [lessonModal, setLessonModal] = useState<{ moduleId: string; lesson?: any } | null>(null)
-  const [quizModal, setQuizModal] = useState<{ lessonId: string } | null>(null)
+  // Arriving from the AI assistant opens the matching builder straight away
+  const [quizModal, setQuizModal] = useState<{ lessonId: string; draft?: AssessmentDraft | null } | null>(
+    openQuizLessonId ? { lessonId: openQuizLessonId, draft: quizDraft ?? null } : null
+  )
+  const [examModal, setExamModal] = useState<{ draft?: AssessmentDraft | null } | null>(
+    openFinalExam ? { draft: examDraft ?? null } : null
+  )
   const [liveClassOpen, setLiveClassOpen] = useState(false)
 
   const addModule = async () => {
@@ -100,7 +122,9 @@ export function AdminCourseBuilder({ courseId, onNavigate }: { courseId: string;
           <Button variant="outline" onClick={() => setLiveClassOpen(true)} className={course.liveClassUrl ? 'border-primary/30 text-primary' : ''}>
             <Radio className="h-4 w-4 mr-1" /> {course.liveClassUrl ? 'Edit Live Class' : 'Set Live Class'}
           </Button>
-          <FinalExamButton courseId={course.id} />
+          <Button variant="outline" onClick={() => setExamModal({})}>
+            <FileCheck className="h-4 w-4 mr-1" /> Final Exam
+          </Button>
           <Button onClick={() => setModuleOpen(true)} className="bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-1" /> Add Module
           </Button>
@@ -235,9 +259,24 @@ export function AdminCourseBuilder({ courseId, onNavigate }: { courseId: string;
         />
       )}
 
+      {/* Final exam dialog */}
+      {examModal && (
+        <FinalExamEditor
+          courseId={course.id}
+          initialDraft={examModal.draft}
+          onClose={() => setExamModal(null)}
+        />
+      )}
+
       {/* Quiz dialog */}
       {quizModal && (
-        <QuizEditor lessonId={quizModal.lessonId} courseId={courseId} onClose={() => setQuizModal(null)} onSaved={() => { setQuizModal(null); refetch() }} />
+        <QuizEditor
+          lessonId={quizModal.lessonId}
+          courseId={courseId}
+          initialDraft={quizModal.draft}
+          onClose={() => setQuizModal(null)}
+          onSaved={() => { setQuizModal(null); refetch() }}
+        />
       )}
 
       {/* Live class dialog */}
@@ -441,18 +480,31 @@ function LessonEditor({ moduleId, lesson, courseId, onClose, onSaved }: any) {
   )
 }
 
-function QuizEditor({ lessonId, courseId, onClose, onSaved }: { lessonId: string; courseId: string; onClose: () => void; onSaved: () => void }) {
-  const [title, setTitle] = useState('')
-  const [passMark, setPassMark] = useState('50')
-  const [questions, setQuestions] = useState<Array<{ text: string; options: string[]; answer: number; imageUrl: string }>>([
-    { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }
-  ])
+function QuizEditor({
+  lessonId, courseId, onClose, onSaved, initialDraft,
+}: {
+  lessonId: string
+  courseId: string
+  onClose: () => void
+  onSaved: () => void
+  /** questions drafted by the AI assistant, pre-filled for review */
+  initialDraft?: AssessmentDraft | null
+}) {
+  // An AI draft, when present, is the starting point — nothing to fetch
+  const draft = initialDraft?.questions?.length ? initialDraft : null
+  const [title, setTitle] = useState(draft?.title || '')
+  const [passMark, setPassMark] = useState(String(draft?.passMark ?? 50))
+  const [questions, setQuestions] = useState<EditorQuestion[]>(
+    draft ? draft.questions.map(toEditorQuestion) : [emptyQuestion('MCQ')]
+  )
   const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!draft)
   const [existingQuizId, setExistingQuizId] = useState<string | null>(null)
+  void courseId
 
-  // Fetch existing quiz for this lesson
+  // Fetch the stored quiz for this lesson
   useEffect(() => {
+    if (draft) return
     fetch(`/api/admin/quizzes?lessonId=${lessonId}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
@@ -461,68 +513,51 @@ function QuizEditor({ lessonId, courseId, onClose, onSaved }: { lessonId: string
           setTitle(data.quiz.title || '')
           setPassMark(String(data.quiz.passMark || 50))
           if (data.quiz.questions && data.quiz.questions.length > 0) {
-            setQuestions(data.quiz.questions.map((q: any) => ({
-              text: q.text,
-              options: q.options,
-              answer: Number(q.answer),
-              imageUrl: q.imageUrl || '',
-            })))
+            setQuestions(data.quiz.questions.map(toEditorQuestion))
           }
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [lessonId])
+  }, [lessonId, draft])
 
-  const updateQ = (i: number, field: 'text' | 'options' | 'answer' | 'imageUrl', val: any) => {
-    setQuestions(prev => prev.map((q, idx) => {
-      if (idx !== i) return q
-      if (field === 'options') {
-        const opts = [...q.options]
-        opts[val.idx] = val.value
-        return { ...q, options: opts }
-      }
-      return { ...q, [field]: val }
-    }))
-  }
+  const updateQ = (i: number, next: EditorQuestion) =>
+    setQuestions(prev => prev.map((q, idx) => (idx === i ? next : q)))
 
-  const addQ = () => setQuestions([...questions, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' }])
-  const insertQ = (i: number) => {
+  const insertQ = (i: number, type: 'MCQ' | 'ESSAY') => {
     const next = [...questions]
-    next.splice(i + 1, 0, { text: '', options: ['', '', '', ''], answer: 0, imageUrl: '' })
+    next.splice(i + 1, 0, emptyQuestion(type))
     setQuestions(next)
   }
-  const removeQ = (i: number) => setQuestions(questions.filter((_, idx) => idx !== i))
 
   const save = async () => {
-    if (!title || questions.some(q => !q.text || q.options.some(o => !o))) {
-      toast.error('Please fill all questions and options')
-      return
-    }
+    const problem = validateQuestions(questions)
+    if (problem) return toast.error(problem)
+
     setSaving(true)
     try {
       await apiPost('/api/admin/quizzes', {
         lessonId,
         title,
         passMark: Number(passMark),
-        questions: questions.map(q => ({
-          text: q.text,
-          options: q.options,
-          answer: q.answer,
-          imageUrl: q.imageUrl || null,
-        }))
+        questions: questions.map(toApiQuestion),
       })
       toast.success(existingQuizId ? 'Quiz updated' : 'Quiz created')
       onSaved()
     } catch (e: any) { toast.error(e.message) } finally { setSaving(false) }
   }
 
+  const essayCount = questions.filter(q => q.type === 'ESSAY').length
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{loading ? 'Loading...' : existingQuizId ? 'Edit Quiz' : 'Create Quiz'}</DialogTitle>
-          <DialogDescription>Add multiple-choice questions. The first correct option per question is the answer.</DialogDescription>
+          <DialogDescription>
+            Mix multiple choice with essay questions. Multiple choice is graded instantly; essays are marked by the AI
+            against your marking guide and released after you approve them in the Gradebook.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {loading ? (
@@ -532,6 +567,16 @@ function QuizEditor({ lessonId, courseId, onClose, onSaved }: { lessonId: string
             </div>
           ) : (
             <>
+          {draft ? (
+            <div className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-xs flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+              <p>
+                <strong>AI draft loaded — {draft.questions.length} questions.</strong> Check every question and
+                marking guide before saving. Nothing reaches students until you do.
+              </p>
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quiz Title</Label>
@@ -543,39 +588,29 @@ function QuizEditor({ lessonId, courseId, onClose, onSaved }: { lessonId: string
             </div>
           </div>
 
-          {questions.map((q, i) => (
-            <div key={i} className="border rounded-lg p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Question {i + 1}</Label>
-                {questions.length > 1 && <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeQ(i)}><X className="h-3 w-3" /></Button>}
-              </div>
-              <Input value={q.text} onChange={(e) => updateQ(i, 'text', e.target.value)} placeholder="Question text" />
-              <ImageUpload
-                value={q.imageUrl || null}
-                onChange={(url) => updateQ(i, 'imageUrl', url ?? '')}
-                label="Question Image (optional)"
-              />
-              <div className="space-y-1">
-                {q.options.map((opt, oi) => (
-                  <div key={oi} className="flex items-center gap-2">
-                    <input type="radio" name={`answer-${i}`} checked={q.answer === oi} onChange={() => updateQ(i, 'answer', oi)} className="h-3 w-3" />
-                    <Input value={opt} onChange={(e) => updateQ(i, 'options', { idx: oi, value: e.target.value })} placeholder={`Option ${oi + 1}`} className="text-xs h-8" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground">Select the radio button next to the correct answer.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => insertQ(i)}
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add Question Below
-              </Button>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Label className="text-sm font-semibold">
+              Questions ({questions.length})
+              {essayCount > 0 && <Badge variant="secondary" className="ml-2 text-[10px]">{essayCount} essay</Badge>}
+            </Label>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setQuestions([...questions, emptyQuestion('MCQ')])}>+ Multiple choice</Button>
+              <Button size="sm" variant="outline" onClick={() => setQuestions([...questions, emptyQuestion('ESSAY')])}>+ Essay</Button>
             </div>
-          ))}
+          </div>
 
-          <Button variant="outline" size="sm" onClick={addQ} className="w-full"><Plus className="h-3 w-3 mr-1" /> Add Question</Button>
+          {questions.map((q, i) => (
+            <QuestionCard
+              key={i}
+              q={q}
+              index={i}
+              radioGroup={`quiz-answer-${i}`}
+              canRemove={questions.length > 1}
+              onChange={(next) => updateQ(i, next)}
+              onRemove={() => setQuestions(questions.filter((_, idx) => idx !== i))}
+              onInsertBelow={(type) => insertQ(i, type)}
+            />
+          ))}
             </>
           )}
         </div>

@@ -38,6 +38,7 @@ model User {
   finalExamAttempts FinalExamAttempt[]
   courseAccess      CourseAccess[]
   blogPosts         BlogPost[]
+  aiDocuments       AiDocument[]
 }
 
 model Course {
@@ -75,6 +76,7 @@ model Course {
   finalExams    FinalExam[]
   courseAccess  CourseAccess[]
   blogPosts     BlogPost[]
+  aiDocuments   AiDocument[]
 }
 
 // CourseAccess — tracks paid access to a course (separate from Enrollment which is free enrollment)
@@ -113,9 +115,11 @@ model FinalExam {
 model FinalExamQuestion {
   id        String   @id @default(cuid())
   examId    String
+  type      String   @default("MCQ") // MCQ | ESSAY
   text      String
-  options   String   // JSON string of options array
-  answer    String   // index of correct answer (as string)
+  options   String   // JSON string of options array ("[]" for essay questions)
+  answer    String   // MCQ: index of the correct answer. ESSAY: unused ("")
+  rubric    String?  // ESSAY: model answer / marking guide the AI marks against
   marks     Int      @default(1)
   position  Int      @default(0)
   imageUrl  String?  // optional image/diagram for the question
@@ -127,10 +131,20 @@ model FinalExamAttempt {
   id         String   @id @default(cuid())
   examId     String
   userId     String
-  score      Int
+  score      Int      // authoritative score: AI mark, then any lecturer adjustment
   totalMarks Int
   passed     Boolean
-  answers    String   // JSON
+  answers    String   // JSON: questionId -> selected option text (MCQ) or typed answer (ESSAY)
+  // AI marking + lecturer review
+  gradingMode  String    @default("AUTO") // AUTO (MCQ only) | AI (an essay was marked by the AI)
+  reviewStatus String    @default("AUTO") // AUTO (final) | PENDING (awaiting lecturer) | REVIEWED
+  aiScore      Int?      // the score the AI first awarded, kept for the audit trail
+  aiFeedback   String?   // overall AI summary shown to the lecturer
+  aiMarkedAt   DateTime?
+  graded       String?   // JSON per-question detail (answer, marks awarded, feedback, overridden)
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
   startedAt  DateTime @default(now())
   completedAt DateTime?
 
@@ -197,9 +211,11 @@ model Quiz {
 model QuizQuestion {
   id        String   @id @default(cuid())
   quizId     String
+  type      String   @default("MCQ") // MCQ | ESSAY
   text      String
-  options   String   // JSON string of options array
-  answer    String   // index of correct answer (as string)
+  options   String   // JSON string of options array ("[]" for essay questions)
+  answer    String   // MCQ: index of the correct answer. ESSAY: unused ("")
+  rubric    String?  // ESSAY: model answer / marking guide the AI marks against
   marks     Int      @default(1)
   position  Int      @default(0)
   imageUrl  String?  // optional image/diagram for the question
@@ -211,10 +227,20 @@ model QuizAttempt {
   id         String   @id @default(cuid())
   quizId      String
   userId      String
-  score       Int
+  score       Int      // authoritative score: AI mark, then any lecturer adjustment
   totalMarks  Int
   passed      Boolean
-  answers     String   // JSON
+  answers     String   // JSON: questionId -> selected option text (MCQ) or typed answer (ESSAY)
+  // AI marking + lecturer review
+  gradingMode  String    @default("AUTO") // AUTO (MCQ only) | AI (an essay was marked by the AI)
+  reviewStatus String    @default("AUTO") // AUTO (final) | PENDING (awaiting lecturer) | REVIEWED
+  aiScore      Int?      // the score the AI first awarded, kept for the audit trail
+  aiFeedback   String?   // overall AI summary shown to the lecturer
+  aiMarkedAt   DateTime?
+  graded       String?   // JSON per-question detail (answer, marks awarded, feedback, overridden)
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
   startedAt   DateTime @default(now())
   completedAt DateTime?
 
@@ -321,4 +347,39 @@ model BlogPost {
 
   author      User     @relation(fields: [authorId], references: [id])
   course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// AiSetting — singleton (id = "default") holding the staff AI provider config.
+// An admin sets these from the portal; when apiKey is empty the server falls back
+// to the OPENAI_API_KEY / AI_API_BASE_URL / AI_MODEL environment variables.
+model AiSetting {
+  id          String   @id @default("default")
+  apiBase     String   @default("https://api.openai.com/v1")
+  model       String   @default("gpt-4o-mini")
+  apiKey      String   @default("")
+  temperature Float    @default(0.3)
+  maxTokens   Int      @default(3000)
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// AiDocument — a handout/lecture note uploaded by a lecturer or admin so the AI can
+// ground generated questions and essay marking in it. `content` holds the extracted
+// plain text (PDF/DOCX are parsed server-side at upload time).
+model AiDocument {
+  id        String   @id @default(cuid())
+  ownerId   String
+  courseId  String?  // null = not tied to one course (usable anywhere)
+  title     String
+  filename  String
+  fileType  String   // pdf | docx | txt | md
+  fileSize  Int      @default(0)
+  content   String   // extracted plain text (truncated to a maximum length on upload)
+  charCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }

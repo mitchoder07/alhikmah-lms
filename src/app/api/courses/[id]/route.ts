@@ -27,7 +27,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
   if (!course) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json({ course })
+
+  // Never ship answers or essay marking guides to the student client — grading
+  // happens on the server against the stored values.
+  const safeCourse = {
+    ...course,
+    modules: course.modules.map(m => ({
+      ...m,
+      lessons: m.lessons.map(l => ({
+        ...l,
+        quizzes: l.quizzes.map(q => ({
+          ...q,
+          questions: q.questions.map(({ answer, rubric, ...rest }) => ({ ...rest, type: rest.type || 'MCQ' })),
+        })),
+      })),
+    })),
+  }
+
+  return NextResponse.json({ course: safeCourse })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { AppShell, NavItem } from '@/components/lms/app-shell'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck, FileText } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck, FileText, Sparkles } from 'lucide-react'
 import { useSession } from '@/components/app-provider'
 import { AdminDashboard } from './dashboard'
 import { AdminCourses } from './courses'
@@ -15,6 +15,7 @@ import { AdminAnnouncements } from './announcements'
 import { AdminBlog } from './blog'
 import { AdminLecturers } from './lecturers'
 import { AdminSettings } from './settings'
+import { AdminAiAssistant } from './ai-assistant'
 
 export function AdminApp() {
   const { user } = useSession()
@@ -38,6 +39,7 @@ export function AdminApp() {
       items.push({ id: 'lecturers', label: 'Lecturers', icon: UserCog })
     }
     items.push(
+      { id: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
       { id: 'gradebook', label: 'Gradebook', icon: BarChart3 },
       { id: 'transcript', label: 'Transcripts', icon: FileText },
       { id: 'certificates', label: 'Certificates', icon: Award },
@@ -64,6 +66,7 @@ export function AdminApp() {
       {view === 'course-builder' && <AdminCourseBuilder {...params} onNavigate={navigate} />}
       {view === 'students' && <AdminStudents />}
       {view === 'lecturers' && user?.role === 'ADMIN' && <AdminLecturers />}
+      {view === 'ai-assistant' && <AdminAiAssistant onNavigate={navigate} />}
       {view === 'gradebook' && <AdminGradebook />}
       {view === 'transcript' && <AdminTranscript />}
       {view === 'certificates' && <AdminCertificates />}

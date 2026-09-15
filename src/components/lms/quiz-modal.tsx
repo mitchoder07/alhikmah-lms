@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { apiPost } from '@/lib/api'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Award, Loader2, Image as ImageIcon } from 'lucide-react'
+import { CheckCircle2, XCircle, Award, Loader2, Image as ImageIcon, Clock, FileText } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 
 interface Quiz {
   id: string; title: string; passMark: number
-  questions: Array<{ id: string; text: string; options: string; answer: string; marks: number; imageUrl?: string | null }>
+  questions: Array<{ id: string; text: string; options: string; answer: string; marks: number; imageUrl?: string | null; type?: string }>
 }
 
 // Simple seeded shuffle — same seed produces same order. Each student gets a unique order.
@@ -32,6 +33,9 @@ export interface QuizResult {
   totalMarks: number
   percent: number
   passed: boolean
+  /** true when the quiz had written answers still waiting for the lecturer */
+  awaitingReview?: boolean
+  reviewStatus?: string
 }
 
 export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { quiz: Quiz; lessonId: string; courseId: string; onClose: () => void; onSubmitted?: (result?: QuizResult) => void }) {
@@ -47,7 +51,8 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
   const shuffledQuestions = useMemo(() => {
     const parsed = quiz.questions.map(q => ({
       ...q,
-      parsedOptions: JSON.parse(q.options),
+      type: (q.type || 'MCQ').toUpperCase() === 'ESSAY' ? 'ESSAY' : 'MCQ',
+      parsedOptions: JSON.parse(q.options || '[]'),
     }))
     const shuffled = seededShuffle(parsed, shuffleSeed)
     // Also shuffle the options within each question
@@ -58,12 +63,13 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
     })
   }, [quiz.questions, shuffleSeed])
 
-  // answers maps questionId to the selected option TEXT (not index, since options are shuffled)
+  // answers maps questionId to the selected option TEXT (MCQ) or the typed answer (essay)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<QuizResult | null>(null)
 
-  const allAnswered = shuffledQuestions.every(q => answers[q.id] !== undefined)
+  const allAnswered = shuffledQuestions.every(q => (answers[q.id] ?? '').trim().length > 0)
+  const essayCount = shuffledQuestions.filter(q => (q.type || 'MCQ') === 'ESSAY').length
 
   const submit = async () => {
     setSubmitting(true)
@@ -71,7 +77,8 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
       // Send answers as { questionId: selectedOptionText }
       const res = await apiPost(`/api/courses/${courseId}/lessons/${lessonId}/quiz/submit`, { quizId: quiz.id, answers })
       setResult(res)
-      if (res.passed) toast.success(`Quiz passed! ${res.percent}%`)
+      if (res.awaitingReview) toast.success('Answers submitted — your lecturer will release the mark')
+      else if (res.passed) toast.success(`Quiz passed! ${res.percent}%`)
       else toast.error(`Quiz failed: ${res.percent}%`)
     } catch (e: any) {
       toast.error(e.message)
@@ -85,21 +92,36 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {result ? (result.passed ? <Award className="h-5 w-5 text-gold" /> : <XCircle className="h-5 w-5 text-destructive" />) : null}
+            {result ? (result.awaitingReview ? <Clock className="h-5 w-5 text-amber-600" /> : result.passed ? <Award className="h-5 w-5 text-gold" /> : <XCircle className="h-5 w-5 text-destructive" />) : null}
             {quiz.title}
           </DialogTitle>
           <DialogDescription>
-            {result ? `You scored ${result.percent}% (${result.score}/${result.totalMarks})` : `Pass mark: ${quiz.passMark}% · ${shuffledQuestions.length} questions`}
+            {result
+              ? result.awaitingReview
+                ? 'Submitted — waiting to be marked'
+                : `You scored ${result.percent}% (${result.score}/${result.totalMarks})`
+              : `Pass mark: ${quiz.passMark}% · ${shuffledQuestions.length} question${shuffledQuestions.length === 1 ? '' : 's'}${essayCount ? ` · ${essayCount} written` : ''}`}
           </DialogDescription>
         </DialogHeader>
 
         {result ? (
           <div className="space-y-3 py-2">
+            {result.awaitingReview ? (
+              <div className="rounded-lg p-6 text-center bg-amber-50 text-amber-800 border border-amber-200">
+                <Clock className="h-10 w-10 mx-auto mb-2" />
+                <p className="font-medium text-lg">Answer submitted</p>
+                <p className="text-xs mt-1 max-w-sm mx-auto">
+                  This quiz had written answers, so it is being marked against your lecturer's marking guide.
+                  Your score will appear here and in your progress once it has been checked.
+                </p>
+              </div>
+            ) : (
             <div className={`rounded-lg p-6 text-center ${result.passed ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               <p className="text-4xl font-bold mb-1">{result.percent}%</p>
               <p className="font-medium">{result.passed ? 'Passed!' : 'Not passed yet'}</p>
               <p className="text-xs mt-1">Score: {result.score} / {result.totalMarks}</p>
             </div>
+            )}
             <DialogFooter>
               <Button onClick={() => onSubmitted?.(result || undefined)} className="bg-primary hover:bg-primary/90">Close</Button>
             </DialogFooter>
@@ -120,6 +142,20 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
                       )}
                     </div>
                   </div>
+                  {q.type === 'ESSAY' ? (
+                    <div className="space-y-1">
+                      <Textarea
+                        value={answers[q.id] ?? ''}
+                        onChange={(e) => setAnswers((p) => ({ ...p, [q.id]: e.target.value }))}
+                        rows={5}
+                        className="text-sm"
+                        placeholder="Write your answer here…"
+                      />
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <FileText className="h-2.5 w-2.5" /> Worth {q.marks} mark{q.marks > 1 ? 's' : ''} · marked by your lecturer
+                      </p>
+                    </div>
+                  ) : (
                   <RadioGroup
                     value={answers[q.id] ?? ''}
                     onValueChange={(v) => setAnswers((p) => ({ ...p, [q.id]: v }))}
@@ -131,6 +167,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
                       </div>
                     ))}
                   </RadioGroup>
+                  )}
                 </div>
               ))}
             </div>
