@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle2, XCircle, Award, ChevronLeft, RotateCcw, Lock } from 'lucide-react'
+import { Loader2, FileCheck, Clock, AlertCircle, CheckCircle2, XCircle, Award, ChevronLeft, RotateCcw, Lock, Hourglass } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
 // Seeded shuffle for question/option randomization
@@ -25,6 +26,7 @@ function seededShuffle<T>(array: T[], seed: string): T[] {
 interface ExamQuestion {
   id: string
   text: string
+  type: 'MCQ' | 'ESSAY'
   options: string[]
   marks: number
   imageUrl?: string | null
@@ -34,6 +36,7 @@ interface ExamAttempt {
   score: number
   totalMarks: number
   passed: boolean
+  reviewStatus: 'AUTO' | 'PENDING' | 'REVIEWED'
   completedAt: string
 }
 interface Exam {
@@ -66,7 +69,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
   const [started, setStarted] = useState(false)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<{ score: number; totalMarks: number; percent: number; passed: boolean } | null>(null)
+  const [result, setResult] = useState<{ score: number; totalMarks: number; percent: number; passed: boolean; awaitingReview?: boolean } | null>(null)
 
   const exam = data?.exam
 
@@ -89,13 +92,15 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
     if (!exam) return []
     const shuffled = seededShuffle(exam.questions, examSeed)
     return shuffled.map(q => {
-      const optsWithIdx = q.options.map((text: string, originalIdx: number) => ({ text, originalIdx }))
+      const optsWithIdx = (q.options || []).map((text: string, originalIdx: number) => ({ text, originalIdx }))
       return { ...q, shuffledOptions: seededShuffle(optsWithIdx, `${examSeed}-${q.id}`) }
     })
   }, [exam, examSeed])
 
-  // answers maps questionId to selected option TEXT (for anti-cheat grading)
-  const allAnswered = shuffledQuestions.length > 0 && shuffledQuestions.every(q => answers[q.id] !== undefined)
+  // answers maps questionId to selected option TEXT (MCQ) or the typed answer (essay)
+  const allAnswered = shuffledQuestions.length > 0 && shuffledQuestions.every(q => (answers[q.id] ?? '').trim().length > 0)
+  const answeredCount = shuffledQuestions.filter(q => (answers[q.id] ?? '').trim().length > 0).length
+  const essayCount = shuffledQuestions.filter(q => q.type === 'ESSAY').length
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -120,8 +125,10 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
 
   const attemptsUsed = exam.attempts.length
   const attemptsLeft = exam.maxAttempts - attemptsUsed
-  const bestAttempt = exam.attempts.find(a => a.passed) || (exam.attempts.length > 0 ? exam.attempts[0] : null)
-  const hasPassed = exam.attempts.some(a => a.passed)
+  const releasedAttempts = exam.attempts.filter(a => a.reviewStatus !== 'PENDING')
+  const bestAttempt = releasedAttempts.find(a => a.passed) || (releasedAttempts.length > 0 ? releasedAttempts[0] : null)
+  const hasPassed = releasedAttempts.some(a => a.passed)
+  const awaitingCount = exam.attempts.length - releasedAttempts.length
 
   const restart = () => {
     setStarted(false)
@@ -133,6 +140,23 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
   if (result) {
     return (
       <div className="max-w-2xl mx-auto space-y-4">
+        {result.awaitingReview ? (
+          <Card className="border-amber-300">
+            <CardContent className="py-10 text-center">
+              <div className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center bg-amber-100">
+                <Hourglass className="h-10 w-10 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Exam Submitted</h2>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+                Your written answers are being marked against your lecturer's marking guide. You will see your score
+                here, and it will count towards your certificate, once your lecturer has checked and released it.
+              </p>
+              <Button onClick={() => onNavigate('course-player', { courseId })} className="bg-primary hover:bg-primary/90">
+                Back to Course
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
         <Card className={result.passed ? 'border-green-500' : 'border-destructive'}>
           <CardContent className="py-10 text-center">
             <div className={`h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center ${result.passed ? 'bg-green-100' : 'bg-destructive/10'}`}>
@@ -175,6 +199,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     )
   }
@@ -266,11 +291,34 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
                   <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">Attempt {exam.attempts.length - i}</span>
-                      {a.passed ? <Badge className="bg-green-100 text-green-700">Passed</Badge> : <Badge variant="secondary" className="text-destructive">Failed</Badge>}
+                      {a.reviewStatus === 'PENDING' ? (
+                        <Badge className="bg-amber-100 text-amber-800"><Hourglass className="h-2.5 w-2.5 mr-1" />Being marked</Badge>
+                      ) : a.passed ? <Badge className="bg-green-100 text-green-700">Passed</Badge> : <Badge variant="secondary" className="text-destructive">Failed</Badge>}
                     </div>
-                    <span className="text-sm font-medium">{Math.round((a.score / a.totalMarks) * 100)}%</span>
+                    <span className="text-sm font-medium">
+                      {a.reviewStatus === 'PENDING' ? '—' : `${Math.round((a.score / a.totalMarks) * 100)}%`}
+                    </span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {essayCount > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <Hourglass className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800">
+                  This exam includes {essayCount} written question{essayCount === 1 ? '' : 's'}. Those answers are marked
+                  against your lecturer's marking guide, so your result is released after it has been checked.
+                </p>
+              </div>
+            )}
+
+            {awaitingCount > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/60 border">
+                <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  {awaitingCount} attempt{awaitingCount === 1 ? '' : 's'} still being marked.
+                </p>
               </div>
             )}
 
@@ -304,7 +352,9 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
     try {
       const res = await apiPost(`/api/courses/${courseId}/final-exam`, { answers })
       setResult(res)
-      if (res.passed) {
+      if (res.awaitingReview) {
+        toast.success('Exam submitted — your written answers are being marked')
+      } else if (res.passed) {
         toast.success(`Congratulations! You passed with ${res.percent}%`)
       } else {
         toast.error(`You scored ${res.percent}%. Pass mark is ${exam.passMark}%.`)
@@ -325,7 +375,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
         </button>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5" />
-          <span>{Object.keys(answers).length} of {shuffledQuestions.length} answered</span>
+          <span>{answeredCount} of {shuffledQuestions.length} answered</span>
         </div>
       </div>
 
@@ -349,6 +399,15 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0">{q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
               </div>
+              {q.type === 'ESSAY' ? (
+                <Textarea
+                  value={answers[q.id] ?? ''}
+                  onChange={(e) => setAnswers((p) => ({ ...p, [q.id]: e.target.value }))}
+                  rows={6}
+                  className="text-sm"
+                  placeholder="Write your answer here. Set out your reasoning clearly — the marks follow the points you make."
+                />
+              ) : (
               <RadioGroup
                 value={answers[q.id] ?? ''}
                 onValueChange={(v) => setAnswers((p) => ({ ...p, [q.id]: v }))}
@@ -360,6 +419,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
                   </div>
                 ))}
               </RadioGroup>
+              )}
             </div>
           ))}
         </CardContent>
@@ -367,7 +427,7 @@ export function StudentFinalExam({ courseId, courseTitle, onNavigate }: { course
 
       <div className="flex justify-between items-center gap-3">
         <p className="text-xs text-muted-foreground">
-          {allAnswered ? 'All questions answered.' : `${shuffledQuestions.length - Object.keys(answers).length} question(s) remaining.`}
+          {allAnswered ? 'All questions answered.' : `${shuffledQuestions.length - answeredCount} question(s) remaining.`}
         </p>
         <Button onClick={submit} disabled={!allAnswered || submitting} className="bg-primary hover:bg-primary/90 h-11">
           {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Submitting...</> : <><FileCheck className="h-4 w-4 mr-1" /> Submit Exam</>}

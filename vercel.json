@@ -7,6 +7,30 @@
     "src/app/api/admin/lessons/[id]/files/route.ts": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "src/app/api/admin/ai/documents/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/admin/ai/generate/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/admin/ai/mark/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/admin/ai/chat/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/courses/[id]/final-exam/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/courses/[id]/lessons/[lessonId]/quiz/submit/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }
