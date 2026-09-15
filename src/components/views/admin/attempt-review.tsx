@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { apiPatch, apiPost, useApi } from '@/lib/api'
 import { toast } from 'sonner'
 import {
-  Loader2, CheckCircle2, XCircle, Bot, Sparkles, FileText, ListChecks,
+  Loader2, CheckCircle2, XCircle, Bot, Brain, FileText, ListChecks,
   Save, Pencil, Clock,
 } from 'lucide-react'
 
@@ -94,7 +94,7 @@ export function AttemptReviewDialog({
     setRemarking(true)
     try {
       const res = await apiPost('/api/admin/ai/mark', { kind, attemptId })
-      toast.success(`AI re-marked it — ${res.score}/${res.totalMarks}`)
+      toast.success(`The AI marked it again: ${res.score}/${res.totalMarks}`)
       setOverrides({})
       refetch()
     } catch (e: any) {
@@ -112,7 +112,7 @@ export function AttemptReviewDialog({
         marks: Object.fromEntries(data.items.map((i) => [i.questionId, Number(markOf(i))])),
         note,
       })
-      toast.success(`Saved — ${res.percent}% released to the student`)
+      toast.success(`Saved. ${res.percent}% released to the student.`)
       onSaved?.()
       onClose()
     } catch (e: any) {
@@ -143,7 +143,7 @@ export function AttemptReviewDialog({
           </DialogTitle>
           <DialogDescription>
             {data
-              ? `${data.student.name}${data.student.matricNumber ? ` (${data.student.matricNumber})` : ''} · ${data.course.code} · ${data.assessment.title}${data.assessment.lessonTitle ? ` — ${data.assessment.lessonTitle}` : ''}`
+              ? `${data.student.name}${data.student.matricNumber ? ` (${data.student.matricNumber})` : ''} · ${data.course.code} · ${data.assessment.title}${data.assessment.lessonTitle ? `: ${data.assessment.lessonTitle}` : ''}`
               : 'Loading attempt…'}
           </DialogDescription>
         </DialogHeader>
@@ -156,7 +156,7 @@ export function AttemptReviewDialog({
               <div className="rounded-lg border p-2">
                 <p className="text-[10px] text-muted-foreground uppercase">AI score</p>
                 <p className="text-lg font-bold">
-                  {data.attempt.aiScore === null ? '—' : `${data.attempt.aiScore}/${data.attempt.totalMarks}`}
+                  {data.attempt.aiScore === null ? 'No AI mark' : `${data.attempt.aiScore}/${data.attempt.totalMarks}`}
                 </p>
               </div>
               <div className="rounded-lg border p-2">
@@ -252,7 +252,7 @@ export function AttemptReviewDialog({
 
             <div className="space-y-1.5">
               <Label>Note for your records (optional)</Label>
-              <Textarea value={note} onChange={(e) => setNoteOverride(e.target.value)} rows={2} placeholder="e.g. Q4 answer was incomplete but the method was correct — added 2 marks." />
+              <Textarea value={note} onChange={(e) => setNoteOverride(e.target.value)} rows={2} placeholder="e.g. Q4 answer was incomplete but the method was correct, so I added 2 marks." />
             </div>
 
             {data.attempt.reviewStatus === 'REVIEWED' && data.attempt.reviewedAt && (
@@ -266,7 +266,7 @@ export function AttemptReviewDialog({
         <DialogFooter className="flex-col sm:flex-row gap-2">
           {data?.hasEssay && (
             <Button variant="outline" onClick={remark} disabled={remarking || saving} className="sm:mr-auto">
-              {remarking ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+              {remarking ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Brain className="h-4 w-4 mr-1" />}
               Re-mark with AI
             </Button>
           )}
@@ -280,7 +280,7 @@ export function AttemptReviewDialog({
 
         {data && !data.hasEssay && (
           <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <XCircle className="h-3 w-3" /> This assessment had no written answers — the score was calculated automatically.
+            <XCircle className="h-3 w-3" /> This assessment had no written answers. The score was calculated automatically.
             You can still change any mark.
           </p>
         )}

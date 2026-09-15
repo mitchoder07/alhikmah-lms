@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useApi, apiPost, apiDelete } from '@/lib/api'
+import { useApi, apiPost, apiDelete, readableHttpError } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { useSession } from '@/components/app-provider'
 import {
-  Sparkles, Upload, FileText, Trash2, Loader2, Send, Bot, Settings2, Eye,
+  Upload, FileText, Trash2, Loader2, Send, Bot, Settings2, Eye,
   Wand2, CheckCircle2, AlertCircle, ArrowRight, Library, Brain, KeyRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -51,9 +51,9 @@ interface GenerateMeta {
 }
 
 const DIFFICULTIES = [
-  { id: 'easy', label: 'Easy — recall and definitions' },
-  { id: 'medium', label: 'Medium — application and short reasoning' },
-  { id: 'hard', label: 'Hard — analysis, evaluation and calculation' },
+  { id: 'easy', label: 'Easy: recall and definitions' },
+  { id: 'medium', label: 'Medium: application and short reasoning' },
+  { id: 'hard', label: 'Hard: analysis, evaluation and calculation' },
 ]
 
 export function AdminAiAssistant({ onNavigate }: { onNavigate: (v: string, p?: Record<string, any>) => void }) {
@@ -77,10 +77,10 @@ export function AdminAiAssistant({ onNavigate }: { onNavigate: (v: string, p?: R
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-gold" /> AI Assistant
+            <Brain className="h-6 w-6 text-gold" /> AI Assistant
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Upload your handouts, then have the AI set quizzes and final exams from them — including essay questions
+            Upload your handouts, then have the AI set quizzes and final exams from them, including essay questions
             with marking guides. It also marks the written answers, ready for you to check in the Gradebook.
           </p>
         </div>
@@ -174,11 +174,11 @@ function GeneratePanel({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" /> Draft ready — {draft.questions.length} questions
+            <CheckCircle2 className="h-4 w-4 text-green-600" /> Draft ready: {draft.questions.length} questions
           </CardTitle>
           <CardDescription>
             {meta.mcq} multiple choice · {meta.essay} essay · {meta.sources.length ? `from ${meta.sources.join(', ')}` : 'from course material'}
-            {meta.generated < meta.mcq + meta.essay ? ' — some AI questions were unusable and were dropped' : ''}
+            {meta.generated < meta.mcq + meta.essay ? ' · some AI questions were unusable and were dropped' : ''}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -231,7 +231,7 @@ function GeneratePanel({
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Nothing is published yet — the questions open in the builder so you can change or remove any of them before saving.
+            Nothing is published yet. The questions open in the builder, so you can change or remove any of them before saving.
           </p>
         </CardContent>
       </Card>
@@ -268,7 +268,7 @@ function GeneratePanel({
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
             >
               <option value="">Select a course…</option>
-              {courses.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
+              {courses.map((c) => <option key={c.id} value={c.id}>{c.code}: {c.title}</option>)}
             </select>
           </div>
 
@@ -282,7 +282,7 @@ function GeneratePanel({
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:opacity-50"
               >
                 <option value="">{courseId ? 'Select a lesson…' : 'Choose a course first'}</option>
-                {lessons.map((l) => <option key={l.id} value={l.id}>{l.module.title} — {l.title}</option>)}
+                {lessons.map((l) => <option key={l.id} value={l.id}>{l.module.title}: {l.title}</option>)}
               </select>
             </div>
           )}
@@ -328,7 +328,7 @@ function GeneratePanel({
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               rows={3}
-              placeholder="e.g. Include one calculation question on GDP deflator. Avoid questions on the Solow model — we cover it next semester."
+              placeholder="e.g. Include one calculation question on GDP deflator. Avoid questions on the Solow model. We cover it next semester."
             />
           </div>
 
@@ -410,10 +410,17 @@ function DocumentsPanel({
       if (courseId) form.append('courseId', courseId)
       try {
         const res = await fetch('/api/admin/ai/documents', { method: 'POST', body: form })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`)
+        // The body can be empty if the server blew up mid request, so never parse it blind
+        const text = await res.text()
+        let data: any = {}
+        if (text) {
+          try { data = JSON.parse(text) } catch { data = {} }
+        }
+        if (!res.ok) {
+          throw new Error(data.error || readableHttpError(res.status, text))
+        }
         ok++
-        if (data.truncated) toast.info(`"${file.name}" was long — the first part is stored.`)
+        if (data.truncated) toast.info(`"${file.name}" is long, so the first part is stored.`)
       } catch (e: any) {
         toast.error(`${file.name}: ${e.message}`)
       }
@@ -473,7 +480,7 @@ function DocumentsPanel({
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
                 <option value="">Department-wide (all courses)</option>
-                {courses.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
+                {courses.map((c) => <option key={c.id} value={c.id}>{c.code}: {c.title}</option>)}
               </select>
             </div>
             <input
@@ -620,7 +627,7 @@ function ChatPanel({ courses, documents }: { courses: Course[]; documents: AiDoc
             className="rounded-md border bg-background px-3 py-1.5 text-xs"
           >
             <option value="">No specific course</option>
-            {courses.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
+            {courses.map((c) => <option key={c.id} value={c.id}>{c.code}: {c.title}</option>)}
           </select>
           <select
             multiple
@@ -690,6 +697,7 @@ interface AiSettings {
 }
 
 function AiSettingsButton() {
+  const { user } = useSession()
   const [open, setOpen] = useState(false)
   const { data } = useApi<{ settings: AiSettings }>(open ? '/api/admin/ai/settings' : null)
   const [saving, setSaving] = useState(false)
@@ -714,6 +722,9 @@ function AiSettingsButton() {
     }
   }
 
+  // Only the portal administrator sees or changes the provider. The API enforces it too.
+  if (user?.role !== 'ADMIN') return null
+
   return (
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
@@ -725,7 +736,7 @@ function AiSettingsButton() {
             <DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> AI provider</DialogTitle>
             <DialogDescription>
               Used for question generation, essay marking and the assistant chat. Any OpenAI-compatible API works
-              (OpenAI, Groq, Together, OpenRouter) — set the base URL to match.
+              (OpenAI, Groq, Together, OpenRouter). Set the base URL to match.
             </DialogDescription>
           </DialogHeader>
 
@@ -767,7 +778,7 @@ function AiSettingsForm({
           {settings.hasKey ? (
             <p className="text-green-800">
               API key active ({settings.keySource === 'env' ? 'from the server environment' : 'stored here'})
-              {settings.apiKeyMasked && ` — ${settings.apiKeyMasked}`}
+              {settings.apiKeyMasked && ` (${settings.apiKeyMasked})`}
             </p>
           ) : (
             <p className="text-amber-800">

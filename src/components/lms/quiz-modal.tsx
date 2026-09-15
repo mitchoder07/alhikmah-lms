@@ -77,7 +77,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
       // Send answers as { questionId: selectedOptionText }
       const res = await apiPost(`/api/courses/${courseId}/lessons/${lessonId}/quiz/submit`, { quizId: quiz.id, answers })
       setResult(res)
-      if (res.awaitingReview) toast.success('Answers submitted — your lecturer will release the mark')
+      if (res.awaitingReview) toast.success('Answers submitted. Your lecturer will release the mark once it is checked.')
       else if (res.passed) toast.success(`Quiz passed! ${res.percent}%`)
       else toast.error(`Quiz failed: ${res.percent}%`)
     } catch (e: any) {
@@ -98,7 +98,7 @@ export function QuizModal({ quiz, lessonId, courseId, onClose, onSubmitted }: { 
           <DialogDescription>
             {result
               ? result.awaitingReview
-                ? 'Submitted — waiting to be marked'
+                ? 'Submitted, waiting to be marked'
                 : `You scored ${result.percent}% (${result.score}/${result.totalMarks})`
               : `Pass mark: ${quiz.passMark}% · ${shuffledQuestions.length} question${shuffledQuestions.length === 1 ? '' : 's'}${essayCount ? ` · ${essayCount} written` : ''}`}
           </DialogDescription>

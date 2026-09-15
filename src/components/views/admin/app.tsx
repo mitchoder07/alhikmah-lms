@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { AppShell, NavItem } from '@/components/lms/app-shell'
-import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck, FileText, Sparkles } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Users, BarChart3, Award, Megaphone, Settings, UserCog, Newspaper, ShieldCheck, FileText, Brain } from 'lucide-react'
 import { useSession } from '@/components/app-provider'
 import { AdminDashboard } from './dashboard'
 import { AdminCourses } from './courses'
@@ -39,7 +39,7 @@ export function AdminApp() {
       items.push({ id: 'lecturers', label: 'Lecturers', icon: UserCog })
     }
     items.push(
-      { id: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
+      { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
       { id: 'gradebook', label: 'Gradebook', icon: BarChart3 },
       { id: 'transcript', label: 'Transcripts', icon: FileText },
       { id: 'certificates', label: 'Certificates', icon: Award },

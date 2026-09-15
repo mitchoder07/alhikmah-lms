@@ -77,7 +77,7 @@ export function correctOptionText(q: QuestionLike): string {
 
 /**
  * Deterministic marking of the objective (MCQ) questions. Essay questions come
- * back with 0 marks and an empty feedback — they are filled in by the AI pass.
+ * back with 0 marks and an empty feedback, which the AI pass fills in.
  */
 export function gradeObjective(
   questions: QuestionLike[],
@@ -120,7 +120,7 @@ export function gradeObjective(
       maxMarks,
       marksAwarded: isCorrect ? maxMarks : 0,
       aiMarks: isCorrect ? maxMarks : 0,
-      feedback: isCorrect ? 'Correct.' : `Not correct — the right answer is: ${correct}`,
+      feedback: isCorrect ? 'Correct.' : `Not correct. The right answer is: ${correct}`,
     })
   }
 
@@ -322,7 +322,7 @@ export async function markAttemptWithAi(
         marksAwarded: 0,
         aiMarks: null,
         feedback: failure
-          ? `Not marked yet — ${failure} Your lecturer will mark this answer.`
+          ? `Not marked yet. ${failure} Your lecturer will mark this answer.`
           : 'Not marked yet. Your lecturer will mark this answer.',
       }
     }
@@ -373,9 +373,9 @@ async function aiMarkEssays(input: {
   const questionsBlock = input.essays
     .map((e, i) => {
       return [
-        `QUESTION ${i + 1} (id: ${e.id}) — worth ${e.marks} mark(s)`,
+        `QUESTION ${i + 1} (id: ${e.id}), worth ${e.marks} mark(s)`,
         `Text: ${e.text}`,
-        e.rubric ? `Marking guide / model answer:\n${e.rubric}` : 'Marking guide: none supplied — mark on subject knowledge, accuracy and relevance.',
+        e.rubric ? `Marking guide / model answer:\n${e.rubric}` : 'Marking guide: none supplied. Mark on subject knowledge, accuracy and relevance.',
         `STUDENT ANSWER:\n${e.answer || '(the student left this blank)'}`,
       ].join('\n')
     })
@@ -396,7 +396,7 @@ async function aiMarkEssays(input: {
   ].join('\n')
 
   const user = [
-    input.sourceContext ? `Reference material from the lecturer's own documents — mark in line with it:\n\n${input.sourceContext}` : '',
+    input.sourceContext ? `Reference material from the lecturer's own documents. Mark in line with it:\n\n${input.sourceContext}` : '',
     'Mark each question below. Use the question id exactly as given.',
     questionsBlock,
   ]
@@ -476,7 +476,7 @@ async function syncExamEnrollment(attemptId: string, percent: number) {
       data: { finalScore: percent, completedAt: enrollment.completedAt ?? new Date(), lecturerApproved: true },
     })
   } else if (enrollment.finalScore !== null) {
-    // A review took the student below the pass mark — clear the released result
+    // A review took the student below the pass mark, so clear the released result
     await db.enrollment.update({
       where: { id: enrollment.id },
       data: { finalScore: null, completedAt: null, lecturerApproved: false },
