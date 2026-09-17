@@ -31,7 +31,16 @@ const COLORS = [
 
 export function AdminDashboard({ onNavigate }: { onNavigate: (v: string, p?: any) => void }) {
   const { user } = useSession()
-  const { data, loading } = useApi<Analytics>('/api/admin/analytics')
+  const { data, loading, error } = useApi<Analytics>('/api/admin/analytics')
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+        <p className="font-medium">The dashboard could not load</p>
+        <p className="text-xs text-muted-foreground mt-1">{error}</p>
+      </div>
+    )
+  }
 
   if (loading || !data) {
     return <div className="text-sm text-muted-foreground">Loading dashboard…</div>

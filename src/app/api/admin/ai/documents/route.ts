@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { getStaffUser } from '@/lib/auth'
 import { extractDocumentText, DocumentError, MAX_DOC_BYTES } from '@/lib/documents'
 import { visibleDocsWhere } from '@/lib/ai-docs'
+import { describeDbError } from '@/lib/db-errors'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -14,24 +15,32 @@ export async function GET() {
   const user = await getStaffUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const docs = await db.aiDocument.findMany({
-    where: await visibleDocsWhere(user),
-    select: {
-      id: true,
-      title: true,
-      filename: true,
-      fileType: true,
-      fileSize: true,
-      charCount: true,
-      courseId: true,
-      createdAt: true,
-      course: { select: { id: true, code: true, title: true } },
-      owner: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+  // This list is the first thing to touch the table, so report a missing table here
+  // instead of leaving the Documents tab looking quietly empty.
+  try {
+    const docs = await db.aiDocument.findMany({
+      where: await visibleDocsWhere(user),
+      select: {
+        id: true,
+        title: true,
+        filename: true,
+        fileType: true,
+        fileSize: true,
+        charCount: true,
+        courseId: true,
+        createdAt: true,
+        course: { select: { id: true, code: true, title: true } },
+        owner: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
-  return NextResponse.json({ documents: docs, maxBytes: MAX_DOC_BYTES })
+    return NextResponse.json({ documents: docs, maxBytes: MAX_DOC_BYTES })
+  } catch (e) {
+    const { error, code } = describeDbError(e, 'The documents could not be loaded. Please try again.')
+    console.error('[ai/documents] list error:', code ?? '', e)
+    return NextResponse.json({ error, code }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -104,10 +113,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ document: doc, truncated: extracted.truncated })
   } catch (e) {
-    console.error('[ai/documents] save error:', e)
-    return NextResponse.json(
-      { error: 'The file was read but could not be saved. Please try again.' },
-      { status: 500 },
-    )
+    const { error, code } = describeDbError(e, 'The file was read but could not be saved. Please try again.')
+    console.error('[ai/documents] save error:', code ?? '', e)
+    return NextResponse.json({ error, code }, { status: 500 })
   }
 }

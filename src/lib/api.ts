@@ -30,7 +30,15 @@ export function useApi<T>(url: string | null, deps: any[] = []) {
     })
     fetch(url, { cache: 'no-store' })
       .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        if (!r.ok) {
+          // Read the body first: a route's own explanation beats a bare "HTTP 500"
+          const text = await r.text().catch(() => '')
+          let message = ''
+          if (text) {
+            try { message = JSON.parse(text)?.error || '' } catch { message = '' }
+          }
+          throw new Error(message || readableHttpError(r.status, text))
+        }
         return r.json()
       })
       .then((d) => { if (!cancelled) setData(d) })

@@ -59,7 +59,7 @@ const DIFFICULTIES = [
 export function AdminAiAssistant({ onNavigate }: { onNavigate: (v: string, p?: Record<string, any>) => void }) {
   const { user } = useSession()
   const { data: coursesData } = useApi<{ courses: Course[] }>('/api/courses')
-  const { data: docsData, refetch: refetchDocs } = useApi<{ documents: AiDoc[] }>('/api/admin/ai/documents')
+  const { data: docsData, error: docsError, refetch: refetchDocs } = useApi<{ documents: AiDoc[] }>('/api/admin/ai/documents')
 
   const courses = (coursesData?.courses ?? []).filter((c) => user?.role === 'ADMIN' || !c.lecturerId || c.lecturerId === user?.id)
   const documents = docsData?.documents ?? []
@@ -98,7 +98,7 @@ export function AdminAiAssistant({ onNavigate }: { onNavigate: (v: string, p?: R
           <GeneratePanel courses={courses} documents={documents} onHandOff={handOff} />
         </TabsContent>
         <TabsContent value="documents">
-          <DocumentsPanel courses={courses} documents={documents} refetch={refetchDocs} />
+          <DocumentsPanel courses={courses} documents={documents} error={docsError} refetch={refetchDocs} />
         </TabsContent>
         <TabsContent value="chat">
           <ChatPanel courses={courses} documents={documents} />
@@ -391,8 +391,8 @@ function GeneratePanel({
 // ── Documents ────────────────────────────────────────────────────────────────
 
 function DocumentsPanel({
-  courses, documents, refetch,
-}: { courses: Course[]; documents: AiDoc[]; refetch: () => void }) {
+  courses, documents, error, refetch,
+}: { courses: Course[]; documents: AiDoc[]; error: string | null; refetch: () => void }) {
   const { user } = useSession()
   const inputRef = useRef<HTMLInputElement>(null)
   const [courseId, setCourseId] = useState('')
@@ -462,6 +462,15 @@ function DocumentsPanel({
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">The AI cannot read its document list</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
+          </div>
+        </div>
+      )}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2"><Upload className="h-4 w-4" /> Upload for the AI to digest</CardTitle>
@@ -699,7 +708,7 @@ interface AiSettings {
 function AiSettingsButton() {
   const { user } = useSession()
   const [open, setOpen] = useState(false)
-  const { data } = useApi<{ settings: AiSettings }>(open ? '/api/admin/ai/settings' : null)
+  const { data, error } = useApi<{ settings: AiSettings }>(open ? '/api/admin/ai/settings' : null)
   const [saving, setSaving] = useState(false)
 
   const save = async (values: { apiBase: string; model: string; apiKey: string; temperature: number; maxTokens: number }) => {
@@ -741,7 +750,11 @@ function AiSettingsButton() {
           </DialogHeader>
 
           {!data ? (
-            <div className="py-6 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></div>
+            error ? (
+              <p className="py-4 text-sm text-destructive">{error}</p>
+            ) : (
+              <div className="py-6 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></div>
+            )
           ) : (
             <AiSettingsForm key={`${data.settings.apiBase}-${data.settings.model}`} settings={data.settings} saving={saving} onSave={save} />
           )}
