@@ -106,8 +106,19 @@ async function main() {
     data: { authorId: lecturer.id, title: 'Welcome to ECO201 — Microeconomic Theory I', body: 'Dear students, welcome to a new semester. Please ensure you review the course outline and complete the introductory quiz by Friday.' }
   })
 
-  await db.payment.create({
-    data: { userId: studentRecords[0].id, courseId: eco201.id, amount: 5000, provider: 'paystack', reference: 'PSK_DEMO_001', status: 'success', paidAt: new Date() }
+  // ✅ FIXED: Changed to upsert to avoid P2002 unique constraint error on 'reference'
+  await db.payment.upsert({
+    where: { reference: 'PSK_DEMO_001' },
+    update: {},
+    create: {
+      userId: studentRecords[0].id,
+      courseId: eco201.id,
+      amount: 5000,
+      provider: 'paystack',
+      reference: 'PSK_DEMO_001',
+      status: 'success',
+      paidAt: new Date()
+    }
   })
 
   console.log('Seed complete!')
