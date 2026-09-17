@@ -215,6 +215,9 @@ This should not happen because `package.json` has `"postinstall": "prisma genera
 - Make sure `?sslmode=require` is at the end of the connection string.
 - Test the connection locally first: `bun run db:push` should succeed.
 
+### AI uploads fail with "could not be saved" or a table does not exist
+This repo applies schema changes with `prisma db push`, and nothing in the Vercel build does it, so any model added after your last push is missing from the database. Point `.env` at the database the app uses, run `bun run db:push`, then reload the AI Assistant. The upload error and the Documents tab both quote the Prisma error code, so `P2021` confirms a missing table and `P2022` a missing column.
+
 ### Payments not working
 - Check that `PAYSTACK_SECRET_KEY` or `FLW_SECRET_KEY` is set in Vercel env vars.
 - Check that `NEXT_PUBLIC_APP_URL` matches your Vercel URL (for callback redirects).

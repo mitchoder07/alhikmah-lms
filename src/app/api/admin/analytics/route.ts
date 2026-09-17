@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { describeDbError } from '@/lib/db-errors'
 
 export async function GET() {
   const user = await getCurrentUser()
@@ -8,6 +9,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
+  // The dashboard shows "Loading dashboard" for as long as it has no data, so a failure
+  // here has to come back as a message rather than an empty body.
+  try {
+    return NextResponse.json(await collect())
+  } catch (e) {
+    const { error, code } = describeDbError(e, 'The dashboard numbers could not be loaded. Please try again.')
+    console.error('[analytics] error:', code ?? '', e)
+    return NextResponse.json({ error, code }, { status: 500 })
+  }
+}
+
+async function collect() {
   const [students, courses, enrollments, payments, certificates, lessons, attempts] = await Promise.all([
     db.user.count({ where: { role: 'STUDENT' } }),
     db.course.count(),
@@ -44,9 +57,9 @@ export async function GET() {
   // Average pass rate
   const passRate = attempts.length > 0 ? Math.round((attempts.filter(a => a.passed).length / attempts.length) * 100) : 0
 
-  return NextResponse.json({
+  return {
     totals: { students, courses, enrollments, certificates, lessons, revenue, passRate },
     revenueByMonth: months,
     courseDistribution: courseDist.map(c => ({ code: c.code, title: c.title, students: c._count.enrollments })),
-  })
+  }
 }
