@@ -109,7 +109,7 @@ export function StaffLoginPage() {
 
           <p className="text-xs text-center text-white/50 mt-4">
             Forgot password?{' '}
-            <button type="button" className="text-[#D4AF37] hover:underline font-medium" onClick={() => toast.info('Please contact the administrator at admin@alhikmah.edu.ng to reset your password.', { duration: 8000 })}>
+            <button type="button" className="text-[#D4AF37] hover:underline font-medium" onClick={() => toast.info('Please contact the administrator at admin.albashiracademy@gmail.com to reset your password.', { duration: 8000 })}>
               Click here
             </button>
           </p>

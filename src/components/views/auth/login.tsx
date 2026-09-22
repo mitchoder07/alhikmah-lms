@@ -128,7 +128,7 @@ export function LoginPage() {
           <DialogHeader>
             <DialogTitle>Forgot Password</DialogTitle>
             <DialogDescription>
-              Enter the email address associated with your account. We won&apos;t send an automated email — password resets are handled by the administrator.
+              Enter the email address you registered with. We don&apos;t send automated reset emails, so the administrator will handle it for you.
             </DialogDescription>
           </DialogHeader>
           {forgotSubmitted ? (
@@ -139,8 +139,8 @@ export function LoginPage() {
                   <p className="font-medium text-foreground">Contact the administrator</p>
                   <p className="text-muted-foreground">
                     Please contact the administrator at{' '}
-                    <a href="mailto:admin@alhikmah.edu.ng" className="font-medium text-primary hover:underline break-all">
-                      admin@alhikmah.edu.ng
+                    <a href="mailto:admin.albashiracademy@gmail.com" className="font-medium text-primary hover:underline break-all">
+                      admin.albashiracademy@gmail.com
                     </a>{' '}
                     to reset your password. For security reasons, password resets are handled manually.
                   </p>

@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
   // Check if AI API key is configured
   const apiKey = process.env.OPENAI_API_KEY || process.env.AI_API_KEY
-  const apiBase = process.env.AI_API_BASE_URL || 'https://api.openai.com/v1'
-  const model = process.env.AI_MODEL || 'gpt-4o-mini'
+  const apiBase = process.env.AI_API_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai'
+  const model = process.env.AI_MODEL || 'gemini-3.8-flash'
 
   if (!apiKey) {
     const reply = "The AI Study Buddy needs an API key to function. The site administrator needs to set the OPENAI_API_KEY environment variable on the hosting platform (Vercel). Once configured, I will be able to answer your Economics questions instantly."
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       { role: 'user', content: message },
     ]
 
-    // Use standard OpenAI-compatible API (works with OpenAI, Groq, Together AI, etc.)
+    // Use standard OpenAI-compatible API (works with Gemini, OpenAI, Together AI, etc.)
     const res = await fetch(`${apiBase}/chat/completions`, {
       method: 'POST',
       headers: {

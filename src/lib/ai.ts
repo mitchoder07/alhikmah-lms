@@ -7,7 +7,7 @@ import { db } from '@/lib/db'
 // Configuration order:
 //   1. AiSetting row (id = "default"), set by an admin in the portal
 //   2. OPENAI_API_KEY / AI_API_KEY, AI_API_BASE_URL, AI_MODEL environment vars
-// The endpoint is OpenAI-compatible, so OpenAI, Groq, Together, OpenRouter etc.
+// The endpoint is OpenAI-compatible, so Gemini, OpenAI, Together, OpenRouter etc.
 // all work by changing apiBase + model.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -21,8 +21,8 @@ export interface AiConfig {
   keySource: 'settings' | 'env' | 'none'
 }
 
-const DEFAULT_API_BASE = 'https://api.openai.com/v1'
-const DEFAULT_MODEL = 'gpt-4o-mini'
+const DEFAULT_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai'
+const DEFAULT_MODEL = 'gemini-3.8-flash'
 
 export async function getAiConfig(): Promise<AiConfig> {
   const row = await db.aiSetting.findUnique({ where: { id: 'default' } }).catch(() => null)

@@ -4,16 +4,30 @@ import { hashPassword } from '../src/lib/auth'
 async function main() {
   console.log('Seeding Al-Bashir Academy Academy LMS...')
 
-  // Create admin
+  // Create admin. The update sets the password too, so re-running the seed
+  // always leaves the portal admin on the credentials below.
   const admin = await db.user.upsert({
-    where: { email: 'admin@alhikmah.edu.ng' },
-    update: {},
+    where: { email: 'admin.albashiracademy@gmail.com' },
+    update: { password: hashPassword('albashir123') },
     create: {
-      email: 'admin@alhikmah.edu.ng',
+      email: 'admin.albashiracademy@gmail.com',
       name: 'Portal Administrator',
-      password: hashPassword('admin123'),
+      password: hashPassword('albashir123'),
       role: 'ADMIN',
       department: 'Economics',
+    },
+  })
+
+  // Retire the old demo admin so its old password stops working. The row is not
+  // deleted here because other tables can reference it, which would make a hard
+  // delete fail. As a student it shows up in the Students screen, where an admin
+  // can remove it for good if they want.
+  await db.user.updateMany({
+    where: { email: 'admin@alhikmah.edu.ng' },
+    data: {
+      role: 'STUDENT',
+      email: 'retired-admin@alhikmah.edu.ng.invalid',
+      password: hashPassword(crypto.randomUUID()),
     },
   })
 
@@ -123,7 +137,7 @@ async function main() {
 
   console.log('Seed complete!')
   console.log('--- Login credentials ---')
-  console.log('Admin:    admin@alhikmah.edu.ng / admin123')
+  console.log('Admin:    admin.albashiracademy@gmail.com / albashir123')
   console.log('Lecturer: dr.yusuf@alhikmah.edu.ng / lecturer123')
   console.log('Student:  aisha@student.alhikmah.edu.ng / student123')
 }

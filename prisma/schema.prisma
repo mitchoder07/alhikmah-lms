@@ -354,8 +354,8 @@ model BlogPost {
 // to the OPENAI_API_KEY / AI_API_BASE_URL / AI_MODEL environment variables.
 model AiSetting {
   id          String   @id @default("default")
-  apiBase     String   @default("https://api.openai.com/v1")
-  model       String   @default("gpt-4o-mini")
+  apiBase     String   @default("https://generativelanguage.googleapis.com/v1beta/openai")
+  model       String   @default("gemini-3.8-flash")
   apiKey      String   @default("")
   temperature Float    @default(0.3)
   maxTokens   Int      @default(3000)

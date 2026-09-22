@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
         : String(apiKey).trim()
 
   const data = {
-    apiBase: (apiBase ?? existing?.apiBase ?? 'https://api.openai.com/v1').toString().trim().replace(/\/+$/, ''),
-    model: (model ?? existing?.model ?? 'gpt-4o-mini').toString().trim(),
+    apiBase: (apiBase ?? existing?.apiBase ?? 'https://generativelanguage.googleapis.com/v1beta/openai').toString().trim().replace(/\/+$/, ''),
+    model: (model ?? existing?.model ?? 'gemini-3.8-flash').toString().trim(),
     apiKey: nextKey,
     temperature: temperature === undefined ? (existing?.temperature ?? 0.3) : Number(temperature),
     maxTokens: maxTokens === undefined ? (existing?.maxTokens ?? 3000) : Number(maxTokens),
