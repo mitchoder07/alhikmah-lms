@@ -157,7 +157,7 @@ Option A — From your local machine (easiest):
 3. Visit your Vercel URL and log in with the demo credentials:
    - Student: aisha@student.alhikmah.edu.ng / student123
    - Lecturer: dr.yusuf@alhikmah.edu.ng / lecturer123 (via `/?view=staff-login`)
-   - Admin: admin@alhikmah.edu.ng / admin123 (via `/?view=staff-login`)
+   - Admin: admin.albashiracademy@gmail.com / albashir123 (via `/?view=staff-login`)
 
 Option B — From the Vercel CLI:
 ```bash

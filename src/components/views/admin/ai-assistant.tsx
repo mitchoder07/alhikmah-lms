@@ -744,8 +744,7 @@ function AiSettingsButton() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> AI provider</DialogTitle>
             <DialogDescription>
-              Used for question generation, essay marking and the assistant chat. Any OpenAI-compatible API works
-              (OpenAI, Groq, Together, OpenRouter). Set the base URL to match.
+              Used for question generation, essay marking and the assistant chat. Gemini is the default and its free tier needs no credit card. Any OpenAI-compatible API works (Gemini, OpenAI, Together, OpenRouter), so set the base URL to match your provider.
             </DialogDescription>
           </DialogHeader>
 
@@ -803,11 +802,11 @@ function AiSettingsForm({
 
       <div className="space-y-1.5">
         <Label>API base URL</Label>
-        <Input value={form.apiBase} onChange={(e) => setForm({ ...form, apiBase: e.target.value })} placeholder="https://api.openai.com/v1" />
+        <Input value={form.apiBase} onChange={(e) => setForm({ ...form, apiBase: e.target.value })} placeholder="https://generativelanguage.googleapis.com/v1beta/openai" />
       </div>
       <div className="space-y-1.5">
         <Label>Model</Label>
-        <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="gpt-4o-mini" />
+        <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="gemini-3.8-flash" />
       </div>
       <div className="space-y-1.5">
         <Label>

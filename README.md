@@ -88,7 +88,7 @@ See [DEPLOY.md](./DEPLOY.md) for the complete Vercel + Neon deployment guide.
 After running the seed script:
 - **Student:** aisha@student.alhikmah.edu.ng / student123
 - **Lecturer:** dr.yusuf@alhikmah.edu.ng / lecturer123
-- **Admin:** admin@alhikmah.edu.ng / admin123
+- **Admin:** admin.albashiracademy@gmail.com / albashir123
 
 The staff portal is hidden from public view. Access it at `/?view=staff-login` (bookmark this URL; do not share with students).
 
