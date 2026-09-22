@@ -208,7 +208,7 @@ See [DEPLOY.md](./DEPLOY.md) for the complete Vercel + Neon deployment guide.
 After running the seed script:
 - **Student:** aisha@student.alhikmah.edu.ng / student123
 - **Lecturer:** dr.yusuf@alhikmah.edu.ng / lecturer123
-- **Admin:** admin@alhikmah.edu.ng / admin123
+- **Admin:** admin.albashiracademy@gmail.com / albashir123
 
 The staff portal is hidden from public view. Access it at `/?view=staff-login` (bookmark this URL; do not share with students).
 
@@ -386,7 +386,7 @@ Option A — From your local machine (easiest):
 3. Visit your Vercel URL and log in with the demo credentials:
    - Student: aisha@student.alhikmah.edu.ng / student123
    - Lecturer: dr.yusuf@alhikmah.edu.ng / lecturer123 (via `/?view=staff-login`)
-   - Admin: admin@alhikmah.edu.ng / admin123 (via `/?view=staff-login`)
+   - Admin: admin.albashiracademy@gmail.com / albashir123 (via `/?view=staff-login`)
 
 Option B — From the Vercel CLI:
 ```bash
